@@ -1,102 +1,191 @@
-# Git Helper CLI
+# Git Helper CLI 🚀
 
-Interactive Git CLI helper with AI-powered commit message suggestions.
+AI destekli commit mesaj önerileri ile interaktif Git CLI yardımcısı.
 
-## Features
+## ✨ Özellikler
 
-- 📊 **Status Dashboard** - View branch, staged/modified files, recent commits
-- 🤖 **AI Commit Messages** - Auto-generated conventional commit suggestions
-- 📝 **Interactive Commit** - Stage files and commit with guided workflow
-- 📤 **Easy Push** - Push to GitHub with confirmation
-- 📋 **History View** - See recent commits at a glance
+### Temel Özellikler
+- 📊 **Dashboard** - Branch, staged/modified dosyalar, son commit'ler
+- 🤖 **AI Commit Mesajları** - Otomatik conventional commit önerileri
+- 📝 **İnteraktif Commit** - Guided workflow ile stage ve commit
+- 📤 **Push/Pull** - GitHub ile senkronizasyon
+- 📋 **Geçmiş** - Son commit'leri görüntüle
 
-## Installation
+### Gelişmiş Özellikler
+- 🔀 **Branch Yönetimi** - Oluştur, sil, değiştir, yeniden adlandır
+- 📦 **Stash Yönetimi** - Kaydet, uygula, sil, görüntüle
+- 🏷️ **Tag Yönetimi** - Oluştur, push, sil
+- ⚔️ **Merge/Rebase** - Branch merge, rebase, conflict çözücü
+- 🔗 **Remote Yönetimi** - GitHub, GitLab, Bitbucket, Azure DevOps
+- 📝 **.gitignore Yönetimi** - Şablonlar ve manuel düzenleme
+
+## 📦 Kurulum
 
 ```bash
-# Navigate to the tool directory
+# Klasöre git
 cd C:\tools\git-helper
 
-# Install dependencies
+# Bağımlılıkları yükle
 npm install
 
-# Build
+# Derle
 npm run build
 
-# Install globally (optional)
+# Global kurulum (opsiyonel)
 npm link
 ```
 
-## Usage
+### PowerShell Profil Kısayolu
 
-### Interactive Mode (Recommended)
+PowerShell profilinize ekleyin (`$PROFILE`):
 
-```bash
-# From any git repository
-git-helper
+```powershell
+function gh { C:\tools\git-helper\gh.cmd }
 ```
 
-This opens an interactive dashboard where you can:
-- View status and recent commits
-- Stage files
-- Commit with AI-suggested messages
-- Push to GitHub
+## 🎮 Kullanım
 
-### Commands
+### İnteraktif Mod (Önerilen)
 
 ```bash
-# Show detailed status
-git-helper status
-
-# Interactive commit with AI suggestions
-git-helper commit
-
-# Push to GitHub
-git-helper push
-
-# View commit history
-git-helper history
-git-helper history -n 20  # Show last 20 commits
+# Herhangi bir git repository'de
+gh
 ```
 
-## AI Commit Messages
+Bu merkezi dashboard'u açar ve tüm özelliklere tek ekrandan erişebilirsiniz.
 
-The tool analyzes your staged files and generates conventional commit messages:
-
-- **feat**: New features
-- **fix**: Bug fixes
-- **docs**: Documentation changes
-- **style**: Code style changes
-- **refactor**: Code refactoring
-- **test**: Test changes
-- **chore**: Maintenance tasks
-- **ci**: CI/CD changes
-
-Example suggestions:
-- `feat(ui): add ProductSelector component`
-- `fix: resolve TypeScript error in operations`
-- `docs: update README documentation`
-
-## Quick Workflow
+### Doğrudan Komutlar
 
 ```bash
-# 1. Make changes to your code
-# 2. Run git-helper
-git-helper
+gh status      # Detaylı durum
+gh commit      # AI önerili commit
+gh push        # GitHub'a push
+gh history     # Commit geçmişi
+gh history -n 20  # Son 20 commit
 
-# 3. Select "Stage files" if needed
-# 4. Select "Commit staged files"
-# 5. Review AI suggestion and confirm
-# 6. Push to GitHub when prompted
-
-# Done! 🎉
+# Gelişmiş
+gh branch      # veya gh b - Branch yönetimi
+gh stash       # veya gh s - Stash yönetimi
+gh tag         # veya gh t - Tag yönetimi
+gh merge       # veya gh m - Merge/Rebase
+gh init        # veya gh i - Repo başlat/remote bağla
+gh gitignore   # veya gh g - .gitignore yönetimi
+gh clone       # veya gh c - Repo klonla
 ```
 
-## Development
+## 🔀 Branch Yönetimi
+
+```
+gh branch
+```
+
+- 🔀 Branch değiştir
+- ➕ Yeni branch oluştur
+- ✏️ Branch yeniden adlandır
+- 🗑️ Branch sil (yerel/remote)
+- 📋 Tüm branch'ları listele
+
+## 📦 Stash Yönetimi
+
+```
+gh stash
+```
+
+- 💾 Değişiklikleri stash'le (mesajlı)
+- 📤 Stash'i uygula ve sil (pop)
+- 📋 Stash'i uygula (apply)
+- 👁️ Stash içeriğini görüntüle
+- 🗑️ Stash'i sil
+- 🧹 Tüm stash'leri temizle
+
+## 🏷️ Tag Yönetimi
+
+```
+gh tag
+```
+
+- ➕ Yeni tag oluştur (annotated/lightweight)
+- 📤 Tag push'la
+- 📤 Tüm tag'leri push'la
+- 🗑️ Tag sil (yerel/remote)
+
+## ⚔️ Merge/Rebase
+
+```
+gh merge
+```
+
+- 🔀 Branch merge et (--no-ff seçeneği)
+- 📐 Branch rebase et
+- 🔄 Conflict'leri çöz (ours/theirs/manual)
+- 🔙 Son commit'i geri al (revert)
+- ↩️ Reset (soft/mixed/hard)
+
+## 🔗 Remote Yönetimi
+
+```
+gh init
+```
+
+- Git repo başlat
+- GitHub/GitLab/Bitbucket/Azure DevOps bağla
+- Remote ekle/değiştir/sil
+- HTTPS veya SSH desteği
+
+## 📝 .gitignore Yönetimi
+
+```
+gh gitignore
+```
+
+- 📝 Şablondan ekle (Node.js, TypeScript, Python, Java, IDE, OS)
+- ➕ Manuel kural ekle
+- 🗑️ Kural sil
+- 👁️ Tüm kuralları görüntüle
+- 🔄 Sıfırla ve yeni oluştur
+
+## 🤖 AI Commit Mesajları
+
+Staged dosyalarınızı analiz ederek conventional commit formatında öneriler:
+
+| Prefix | Açıklama |
+|--------|----------|
+| `feat` | Yeni özellik |
+| `fix` | Hata düzeltme |
+| `docs` | Dokümantasyon |
+| `style` | Kod stili |
+| `refactor` | Yeniden düzenleme |
+| `test` | Test değişiklikleri |
+| `chore` | Bakım görevleri |
+| `perf` | Performans |
+| `build` | Build sistemi |
+| `ci` | CI/CD |
+
+## 🚀 Hızlı Workflow
 
 ```bash
-# Run in development mode
+# 1. Kod değişiklikleri yap
+# 2. Git Helper'ı aç
+gh
+
+# 3. "Dosyaları stage'le" seç
+# 4. "Commit yap" seç
+# 5. AI önerisini onayla
+# 6. Push yap
+
+# Bitti! 🎉
+```
+
+## 🛠️ Geliştirme
+
+```bash
+# Development mode
 npm run dev
 
-# Build for production
+# Production build
 npm run build
 ```
+
+## 📄 Lisans
+
+MIT
