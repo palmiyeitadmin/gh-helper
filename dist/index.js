@@ -12,6 +12,7 @@ const stash_1 = require("./commands/stash");
 const tag_1 = require("./commands/tag");
 const merge_1 = require("./commands/merge");
 const init_1 = require("./commands/init");
+const gitignore_1 = require("./commands/gitignore");
 commander_1.program
     .name('git-helper')
     .description('AI destekli commit mesaj önerileri ile interaktif Git CLI yardımcısı')
@@ -64,6 +65,11 @@ commander_1.program
     .alias('c')
     .description('Uzak repoyu klonla')
     .action(init_1.cloneRepository);
+commander_1.program
+    .command('gitignore')
+    .alias('g')
+    .description('.gitignore yönetimi')
+    .action(gitignore_1.manageGitignore);
 // Default: show interactive dashboard
 if (process.argv.length === 2) {
     (0, dashboard_1.showDashboard)();

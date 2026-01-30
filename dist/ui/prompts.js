@@ -48,7 +48,7 @@ async function promptMainMenu(status) {
     // Görüntüleme
     choices.push(new inquirer_1.default.Separator('─── Görüntüle ───'), { name: '📊 Detaylı durumu görüntüle', value: 'status' }, { name: '🔍 Diff görüntüle', value: 'diff' }, { name: '📋 Geçmişi görüntüle', value: 'history' });
     // Gelişmiş özellikler
-    choices.push(new inquirer_1.default.Separator('─── Gelişmiş Özellikler ───'), { name: '🔀 Branch yönetimi', value: 'branch' }, { name: '📦 Stash yönetimi', value: 'stash' }, { name: '🏷️ Tag yönetimi', value: 'tag' }, { name: '⚔️ Merge/Rebase', value: 'merge' }, { name: '🔗 Remote yönetimi', value: 'remote' });
+    choices.push(new inquirer_1.default.Separator('─── Gelişmiş Özellikler ───'), { name: '🔀 Branch yönetimi', value: 'branch' }, { name: '📦 Stash yönetimi', value: 'stash' }, { name: '🏷️ Tag yönetimi', value: 'tag' }, { name: '⚔️ Merge/Rebase', value: 'merge' }, { name: '🔗 Remote yönetimi', value: 'remote' }, { name: '📝 .gitignore yönetimi', value: 'gitignore' });
     choices.push(new inquirer_1.default.Separator(), { name: '❌ Çıkış', value: 'exit' });
     const { action } = await inquirer_1.default.prompt([
         {

@@ -22,6 +22,7 @@ import { manageStash } from './stash';
 import { manageTags } from './tag';
 import { manageMergeRebase } from './merge';
 import { initRepository } from './init';
+import { manageGitignore } from './gitignore';
 
 export async function showDashboard(): Promise<void> {
     try {
@@ -105,6 +106,11 @@ export async function showDashboard(): Promise<void> {
 
                 case 'remote':
                     await initRepository();
+                    running = false;
+                    break;
+
+                case 'gitignore':
+                    await manageGitignore();
                     running = false;
                     break;
 

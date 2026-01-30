@@ -2,7 +2,7 @@ import inquirer from 'inquirer';
 import { gitOps, GitStatus } from '../git/operations';
 
 export interface MainMenuChoice {
-    action: 'commit' | 'commit-push' | 'status' | 'diff' | 'history' | 'stage' | 'pull' | 'push' | 'branch' | 'stash' | 'tag' | 'merge' | 'remote' | 'exit';
+    action: 'commit' | 'commit-push' | 'status' | 'diff' | 'history' | 'stage' | 'pull' | 'push' | 'branch' | 'stash' | 'tag' | 'merge' | 'remote' | 'gitignore' | 'exit';
 }
 
 export async function promptMainMenu(status: GitStatus): Promise<MainMenuChoice> {
@@ -57,7 +57,8 @@ export async function promptMainMenu(status: GitStatus): Promise<MainMenuChoice>
         { name: '📦 Stash yönetimi', value: 'stash' },
         { name: '🏷️ Tag yönetimi', value: 'tag' },
         { name: '⚔️ Merge/Rebase', value: 'merge' },
-        { name: '🔗 Remote yönetimi', value: 'remote' }
+        { name: '🔗 Remote yönetimi', value: 'remote' },
+        { name: '📝 .gitignore yönetimi', value: 'gitignore' }
     );
 
     choices.push(

@@ -14,6 +14,7 @@ const stash_1 = require("./stash");
 const tag_1 = require("./tag");
 const merge_1 = require("./merge");
 const init_1 = require("./init");
+const gitignore_1 = require("./gitignore");
 async function showDashboard() {
     try {
         const projectName = operations_1.gitOps.getProjectName();
@@ -78,6 +79,10 @@ async function showDashboard() {
                     break;
                 case 'remote':
                     await (0, init_1.initRepository)();
+                    running = false;
+                    break;
+                case 'gitignore':
+                    await (0, gitignore_1.manageGitignore)();
                     running = false;
                     break;
                 case 'exit':

@@ -1,6 +1,6 @@
 import { GitStatus } from '../git/operations';
 export interface MainMenuChoice {
-    action: 'commit' | 'commit-push' | 'status' | 'diff' | 'history' | 'stage' | 'pull' | 'push' | 'branch' | 'stash' | 'tag' | 'merge' | 'remote' | 'exit';
+    action: 'commit' | 'commit-push' | 'status' | 'diff' | 'history' | 'stage' | 'pull' | 'push' | 'branch' | 'stash' | 'tag' | 'merge' | 'remote' | 'gitignore' | 'exit';
 }
 export declare function promptMainMenu(status: GitStatus): Promise<MainMenuChoice>;
 export declare function promptStageFiles(files: string[]): Promise<string[]>;

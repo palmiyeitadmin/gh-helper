@@ -11,6 +11,7 @@ import { manageStash } from './commands/stash';
 import { manageTags } from './commands/tag';
 import { manageMergeRebase } from './commands/merge';
 import { initRepository, cloneRepository } from './commands/init';
+import { manageGitignore } from './commands/gitignore';
 
 program
     .name('git-helper')
@@ -74,6 +75,12 @@ program
     .alias('c')
     .description('Uzak repoyu klonla')
     .action(cloneRepository);
+
+program
+    .command('gitignore')
+    .alias('g')
+    .description('.gitignore yönetimi')
+    .action(manageGitignore);
 
 // Default: show interactive dashboard
 if (process.argv.length === 2) {
