@@ -1,0 +1,11 @@
+import { GitStatus, CommitInfo } from '../git/operations';
+export declare function displayHeader(projectName: string): void;
+export declare function displayStatus(status: GitStatus): void;
+export declare function displayRecentCommits(commits: CommitInfo[]): void;
+export declare function displayStagedFiles(files: string[]): void;
+export declare function displayDiff(diff: string): void;
+export declare function displaySuccess(message: string): void;
+export declare function displayError(message: string): void;
+export declare function displayWarning(message: string): void;
+export declare function displayInfo(message: string): void;
+export declare function displayCommitSuggestion(message: string): void;

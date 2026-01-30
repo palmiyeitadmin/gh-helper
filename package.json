@@ -1,0 +1,37 @@
+{
+    "name": "git-helper",
+    "version": "1.0.0",
+    "description": "Interactive Git CLI helper with AI-powered commit message suggestions",
+    "main": "dist/index.js",
+    "bin": {
+        "git-helper": "./dist/index.js",
+        "gh": "./dist/index.js"
+    },
+    "scripts": {
+        "build": "tsc",
+        "start": "node dist/index.js",
+        "dev": "ts-node src/index.ts"
+    },
+    "keywords": [
+        "git",
+        "cli",
+        "helper",
+        "commit"
+    ],
+    "author": "Palmiye",
+    "license": "MIT",
+    "dependencies": {
+        "chalk": "^4.1.2",
+        "commander": "^11.1.0",
+        "inquirer": "^8.2.6",
+        "ora": "^5.4.1",
+        "simple-git": "^3.22.0",
+        "boxen": "^5.1.2"
+    },
+    "devDependencies": {
+        "@types/inquirer": "^9.0.7",
+        "@types/node": "^20.11.0",
+        "typescript": "^5.3.3",
+        "ts-node": "^10.9.2"
+    }
+}
