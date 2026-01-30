@@ -57,6 +57,9 @@ async function showDashboard() {
                 case 'pull':
                     await handlePull();
                     break;
+                case 'push':
+                    await handlePush();
+                    break;
                 case 'branch':
                     await (0, branch_1.manageBranches)();
                     running = false;

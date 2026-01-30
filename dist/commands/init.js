@@ -17,8 +17,26 @@ const PROVIDERS = [
     { name: 'GitLab', urlTemplate: 'https://gitlab.com/{user}/{repo}.git', sshTemplate: 'git@gitlab.com:{user}/{repo}.git' },
     { name: 'Bitbucket', urlTemplate: 'https://bitbucket.org/{user}/{repo}.git', sshTemplate: 'git@bitbucket.org:{user}/{repo}.git' },
     { name: 'Azure DevOps', urlTemplate: 'https://dev.azure.com/{org}/{project}/_git/{repo}', sshTemplate: '' },
-    { name: 'Custom URL', urlTemplate: '', sshTemplate: '' }
+    { name: 'Özel URL', urlTemplate: '', sshTemplate: '' }
 ];
+// Helper function to check if input is a full URL
+function isFullUrl(input) {
+    return input.startsWith('http://') || input.startsWith('https://') || input.startsWith('git@');
+}
+// Helper function to extract username and repo from URL
+function parseGitUrl(url) {
+    // HTTPS format: https://github.com/user/repo.git
+    const httpsMatch = url.match(/https?:\/\/[^\/]+\/([^\/]+)\/([^\/\.]+)/);
+    if (httpsMatch) {
+        return { username: httpsMatch[1], repoName: httpsMatch[2] };
+    }
+    // SSH format: git@github.com:user/repo.git
+    const sshMatch = url.match(/git@[^:]+:([^\/]+)\/([^\/\.]+)/);
+    if (sshMatch) {
+        return { username: sshMatch[1], repoName: sshMatch[2] };
+    }
+    return null;
+}
 async function initRepository() {
     const projectName = path_1.default.basename(process.cwd());
     (0, display_1.displayHeader)(projectName);
@@ -29,24 +47,29 @@ async function initRepository() {
         try {
             const remotes = await git.getRemotes(true);
             if (remotes.length > 0) {
-                console.log(`\n${chalk_1.default.green('✓')} Already a git repository with remote:`);
+                console.log(`\n${chalk_1.default.green('✓')} Zaten bir git repository ve remote mevcut:`);
                 remotes.forEach(r => {
                     console.log(`  ${chalk_1.default.cyan(r.name)}: ${r.refs.fetch}`);
                 });
                 const { action } = await inquirer_1.default.prompt([{
                         type: 'list',
                         name: 'action',
-                        message: 'What would you like to do?',
+                        message: 'Ne yapmak istersiniz?',
                         choices: [
-                            { name: '➕ Add another remote', value: 'add' },
-                            { name: '✏️ Change existing remote', value: 'change' },
-                            { name: '❌ Cancel', value: 'cancel' }
+                            { name: '➕ Başka bir remote ekle', value: 'add' },
+                            { name: '✏️ Mevcut remote\'u değiştir', value: 'change' },
+                            { name: '🗑️ Remote sil', value: 'delete' },
+                            { name: '❌ İptal', value: 'cancel' }
                         ]
                     }]);
                 if (action === 'cancel')
                     return;
                 if (action === 'change') {
                     await changeRemote(git);
+                    return;
+                }
+                if (action === 'delete') {
+                    await deleteRemote(git);
                     return;
                 }
             }
@@ -59,40 +82,40 @@ async function initRepository() {
     const { shouldInit } = isRepo ? { shouldInit: false } : await inquirer_1.default.prompt([{
             type: 'confirm',
             name: 'shouldInit',
-            message: 'This is not a git repository. Initialize one?',
+            message: 'Bu bir git repository değil. Başlatılsın mı?',
             default: true
         }]);
     if (!isRepo && !shouldInit) {
-        console.log('\nOperation cancelled.');
+        console.log('\nİşlem iptal edildi.');
         return;
     }
     if (!isRepo) {
-        const spinner = (0, ora_1.default)('Initializing git repository...').start();
+        const spinner = (0, ora_1.default)('Git repository başlatılıyor...').start();
         await git.init();
-        spinner.succeed('Git repository initialized');
+        spinner.succeed('Git repository başlatıldı');
     }
     // Select provider
     const { provider } = await inquirer_1.default.prompt([{
             type: 'list',
             name: 'provider',
-            message: 'Select git provider:',
+            message: 'Git sağlayıcısını seçin:',
             choices: PROVIDERS.map(p => ({ name: p.name, value: p }))
         }]);
     let remoteUrl = '';
-    if (provider.name === 'Custom URL') {
+    if (provider.name === 'Özel URL') {
         const { customUrl } = await inquirer_1.default.prompt([{
                 type: 'input',
                 name: 'customUrl',
-                message: 'Enter remote URL:',
-                validate: (input) => input.length > 0 || 'URL cannot be empty'
+                message: 'Remote URL girin:',
+                validate: (input) => input.length > 0 || 'URL boş olamaz'
             }]);
         remoteUrl = customUrl;
     }
     else if (provider.name === 'Azure DevOps') {
         const { org, project, repo } = await inquirer_1.default.prompt([
-            { type: 'input', name: 'org', message: 'Organization name:', default: '' },
-            { type: 'input', name: 'project', message: 'Project name:', default: '' },
-            { type: 'input', name: 'repo', message: 'Repository name:', default: projectName }
+            { type: 'input', name: 'org', message: 'Organizasyon adı:', default: '' },
+            { type: 'input', name: 'project', message: 'Proje adı:', default: '' },
+            { type: 'input', name: 'repo', message: 'Repository adı:', default: projectName }
         ]);
         remoteUrl = provider.urlTemplate.replace('{org}', org).replace('{project}', project).replace('{repo}', repo);
     }
@@ -100,74 +123,110 @@ async function initRepository() {
         const { connectionType } = await inquirer_1.default.prompt([{
                 type: 'list',
                 name: 'connectionType',
-                message: 'Connection type:',
+                message: 'Bağlantı türü:',
                 choices: [
-                    { name: 'HTTPS (recommended)', value: 'https' },
+                    { name: 'HTTPS (önerilen)', value: 'https' },
                     { name: 'SSH', value: 'ssh' }
                 ]
             }]);
-        const { username, repoName } = await inquirer_1.default.prompt([
-            { type: 'input', name: 'username', message: 'Username/Organization:', default: '' },
-            { type: 'input', name: 'repoName', message: 'Repository name:', default: projectName }
-        ]);
-        const template = connectionType === 'ssh' ? provider.sshTemplate : provider.urlTemplate;
-        remoteUrl = template.replace('{user}', username).replace('{repo}', repoName);
+        const { username } = await inquirer_1.default.prompt([{
+                type: 'input',
+                name: 'username',
+                message: 'Kullanıcı adı/Organizasyon (veya tam URL):',
+                validate: (input) => input.length > 0 || 'Bu alan boş olamaz'
+            }]);
+        // Check if user entered a full URL
+        if (isFullUrl(username)) {
+            remoteUrl = username;
+            console.log(chalk_1.default.gray(`  Tam URL algılandı: ${remoteUrl}`));
+        }
+        else {
+            const { repoName } = await inquirer_1.default.prompt([{
+                    type: 'input',
+                    name: 'repoName',
+                    message: 'Repository adı:',
+                    default: projectName
+                }]);
+            const template = connectionType === 'ssh' ? provider.sshTemplate : provider.urlTemplate;
+            remoteUrl = template.replace('{user}', username).replace('{repo}', repoName);
+        }
     }
     // Add remote
     const { remoteName } = await inquirer_1.default.prompt([{
             type: 'input',
             name: 'remoteName',
-            message: 'Remote name:',
+            message: 'Remote adı:',
             default: 'origin'
         }]);
-    const spinner = (0, ora_1.default)(`Adding remote '${remoteName}'...`).start();
+    const spinner = (0, ora_1.default)(`'${remoteName}' remote ekleniyor...`).start();
     try {
-        await git.addRemote(remoteName, remoteUrl);
-        spinner.succeed(`Remote '${remoteName}' added: ${remoteUrl}`);
+        // Check if remote already exists
+        const remotes = await git.getRemotes();
+        if (remotes.some(r => r.name === remoteName)) {
+            spinner.stop();
+            const { overwrite } = await inquirer_1.default.prompt([{
+                    type: 'confirm',
+                    name: 'overwrite',
+                    message: `'${remoteName}' zaten mevcut. Üzerine yazılsın mı?`,
+                    default: true
+                }]);
+            if (overwrite) {
+                await git.remote(['set-url', remoteName, remoteUrl]);
+                (0, display_1.displaySuccess)(`Remote '${remoteName}' güncellendi: ${remoteUrl}`);
+            }
+            else {
+                console.log('İşlem iptal edildi.');
+                return;
+            }
+        }
+        else {
+            await git.addRemote(remoteName, remoteUrl);
+            spinner.succeed(`Remote '${remoteName}' eklendi: ${remoteUrl}`);
+        }
         // Offer to create initial commit if needed
         const status = await git.status();
         if (status.files.length > 0 && !status.staged.length) {
             const { createInitialCommit } = await inquirer_1.default.prompt([{
                     type: 'confirm',
                     name: 'createInitialCommit',
-                    message: 'Create initial commit with all files?',
+                    message: 'Tüm dosyalarla initial commit oluşturulsun mu?',
                     default: true
                 }]);
             if (createInitialCommit) {
                 await git.add('.');
                 await git.commit('Initial commit');
-                (0, display_1.displaySuccess)('Created initial commit');
+                (0, display_1.displaySuccess)('Initial commit oluşturuldu');
                 const { pushNow } = await inquirer_1.default.prompt([{
                         type: 'confirm',
                         name: 'pushNow',
-                        message: 'Push to remote now?',
+                        message: 'Şimdi push yapılsın mı?',
                         default: true
                     }]);
                 if (pushNow) {
-                    const pushSpinner = (0, ora_1.default)('Pushing to remote...').start();
+                    const pushSpinner = (0, ora_1.default)('Push yapılıyor...').start();
                     try {
-                        await git.push(remoteName, 'main', ['--set-upstream']);
-                        pushSpinner.succeed('Pushed to remote successfully!');
+                        // Try main first, then master
+                        try {
+                            await git.push(remoteName, 'main', ['--set-upstream']);
+                        }
+                        catch {
+                            await git.push(remoteName, 'master', ['--set-upstream']);
+                        }
+                        pushSpinner.succeed('Push başarılı!');
                     }
                     catch (e) {
-                        pushSpinner.fail(`Push failed. You may need to create the repository on ${provider.name} first.`);
-                        console.log(`\n${chalk_1.default.yellow('Tip:')} Create the repository at ${provider.name}, then run:`);
+                        pushSpinner.fail(`Push başarısız. Önce ${provider.name}'da repository oluşturmanız gerekebilir.`);
+                        console.log(`\n${chalk_1.default.yellow('İpucu:')} ${provider.name}'da repository oluşturduktan sonra şunu çalıştırın:`);
                         console.log(chalk_1.default.cyan(`  git push -u ${remoteName} main`));
                     }
                 }
             }
         }
-        (0, display_1.displaySuccess)('Repository setup complete!');
+        (0, display_1.displaySuccess)('Repository kurulumu tamamlandı!');
         console.log(`\n${chalk_1.default.gray('Remote URL:')} ${chalk_1.default.cyan(remoteUrl)}`);
     }
     catch (error) {
-        if (error.message?.includes('already exists')) {
-            spinner.fail(`Remote '${remoteName}' already exists`);
-            (0, display_1.displayInfo)(`Use 'gh init' again to change the remote`);
-        }
-        else {
-            spinner.fail(`Failed to add remote: ${error.message}`);
-        }
+        spinner.fail(`Remote eklenemedi: ${error.message}`);
     }
 }
 async function changeRemote(git) {
@@ -175,47 +234,122 @@ async function changeRemote(git) {
     const { remoteToChange } = await inquirer_1.default.prompt([{
             type: 'list',
             name: 'remoteToChange',
-            message: 'Select remote to change:',
+            message: 'Değiştirilecek remote\'u seçin:',
             choices: remotes.map(r => ({ name: `${r.name} (${r.refs.fetch})`, value: r.name }))
         }]);
-    const { newUrl } = await inquirer_1.default.prompt([{
-            type: 'input',
-            name: 'newUrl',
-            message: 'Enter new URL:',
-            validate: (input) => input.length > 0 || 'URL cannot be empty'
+    const { inputType } = await inquirer_1.default.prompt([{
+            type: 'list',
+            name: 'inputType',
+            message: 'Nasıl girmek istersiniz?',
+            choices: [
+                { name: '🔗 Tam URL gir', value: 'full' },
+                { name: '📝 Sağlayıcı seçerek oluştur', value: 'provider' }
+            ]
         }]);
-    await git.remote(['set-url', remoteToChange, newUrl]);
-    (0, display_1.displaySuccess)(`Remote '${remoteToChange}' updated to: ${newUrl}`);
+    let newUrl = '';
+    if (inputType === 'full') {
+        const { url } = await inquirer_1.default.prompt([{
+                type: 'input',
+                name: 'url',
+                message: 'Yeni URL:',
+                validate: (input) => {
+                    if (!input.length)
+                        return 'URL boş olamaz';
+                    if (!isFullUrl(input))
+                        return 'Geçerli bir git URL girin (https:// veya git@ ile başlamalı)';
+                    return true;
+                }
+            }]);
+        newUrl = url;
+    }
+    else {
+        const { provider } = await inquirer_1.default.prompt([{
+                type: 'list',
+                name: 'provider',
+                message: 'Git sağlayıcısını seçin:',
+                choices: PROVIDERS.filter(p => p.name !== 'Özel URL').map(p => ({ name: p.name, value: p }))
+            }]);
+        const { connectionType } = await inquirer_1.default.prompt([{
+                type: 'list',
+                name: 'connectionType',
+                message: 'Bağlantı türü:',
+                choices: [
+                    { name: 'HTTPS (önerilen)', value: 'https' },
+                    { name: 'SSH', value: 'ssh' }
+                ]
+            }]);
+        const { username, repoName } = await inquirer_1.default.prompt([
+            { type: 'input', name: 'username', message: 'Kullanıcı adı/Organizasyon:', validate: (i) => i.length > 0 || 'Boş olamaz' },
+            { type: 'input', name: 'repoName', message: 'Repository adı:', validate: (i) => i.length > 0 || 'Boş olamaz' }
+        ]);
+        const template = connectionType === 'ssh' ? provider.sshTemplate : provider.urlTemplate;
+        newUrl = template.replace('{user}', username).replace('{repo}', repoName);
+    }
+    const spinner = (0, ora_1.default)('Remote güncelleniyor...').start();
+    try {
+        await git.remote(['set-url', remoteToChange, newUrl]);
+        spinner.succeed(`Remote '${remoteToChange}' güncellendi: ${newUrl}`);
+    }
+    catch (error) {
+        spinner.fail(`Güncelleme başarısız: ${error.message}`);
+    }
+}
+async function deleteRemote(git) {
+    const remotes = await git.getRemotes(true);
+    const { remoteToDelete } = await inquirer_1.default.prompt([{
+            type: 'list',
+            name: 'remoteToDelete',
+            message: 'Silinecek remote\'u seçin:',
+            choices: remotes.map(r => ({ name: `${r.name} (${r.refs.fetch})`, value: r.name }))
+        }]);
+    const { confirm } = await inquirer_1.default.prompt([{
+            type: 'confirm',
+            name: 'confirm',
+            message: `'${remoteToDelete}' remote'unu silmek istediğinizden emin misiniz?`,
+            default: false
+        }]);
+    if (!confirm) {
+        console.log('İşlem iptal edildi.');
+        return;
+    }
+    const spinner = (0, ora_1.default)('Remote siliniyor...').start();
+    try {
+        await git.remote(['remove', remoteToDelete]);
+        spinner.succeed(`Remote '${remoteToDelete}' silindi`);
+    }
+    catch (error) {
+        spinner.fail(`Silme başarısız: ${error.message}`);
+    }
 }
 async function cloneRepository() {
-    (0, display_1.displayHeader)('Clone Repository');
+    (0, display_1.displayHeader)('Repository Klonla');
     const { repoUrl } = await inquirer_1.default.prompt([{
             type: 'input',
             name: 'repoUrl',
-            message: 'Enter repository URL:',
-            validate: (input) => input.length > 0 || 'URL cannot be empty'
+            message: 'Repository URL girin:',
+            validate: (input) => input.length > 0 || 'URL boş olamaz'
         }]);
     // Extract repo name from URL
     const defaultName = repoUrl.split('/').pop()?.replace('.git', '') || 'repo';
     const { folderName } = await inquirer_1.default.prompt([{
             type: 'input',
             name: 'folderName',
-            message: 'Folder name:',
+            message: 'Klasör adı:',
             default: defaultName
         }]);
     const targetPath = path_1.default.join(process.cwd(), folderName);
     if (fs_1.default.existsSync(targetPath)) {
-        (0, display_1.displayError)(`Folder '${folderName}' already exists`);
+        (0, display_1.displayError)(`'${folderName}' klasörü zaten mevcut`);
         return;
     }
-    const spinner = (0, ora_1.default)('Cloning repository...').start();
+    const spinner = (0, ora_1.default)('Repository klonlanıyor...').start();
     try {
         const git = (0, simple_git_1.default)();
         await git.clone(repoUrl, targetPath);
-        spinner.succeed(`Repository cloned to '${folderName}'`);
+        spinner.succeed(`Repository '${folderName}' klasörüne klonlandı`);
         console.log(`\n${chalk_1.default.gray('cd')} ${chalk_1.default.cyan(folderName)}`);
     }
     catch (error) {
-        spinner.fail(`Clone failed: ${error.message}`);
+        spinner.fail(`Klonlama başarısız: ${error.message}`);
     }
 }

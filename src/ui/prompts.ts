@@ -2,39 +2,62 @@ import inquirer from 'inquirer';
 import { gitOps, GitStatus } from '../git/operations';
 
 export interface MainMenuChoice {
-    action: 'commit' | 'commit-push' | 'status' | 'diff' | 'history' | 'stage' | 'pull' | 'branch' | 'stash' | 'tag' | 'merge' | 'remote' | 'exit';
+    action: 'commit' | 'commit-push' | 'status' | 'diff' | 'history' | 'stage' | 'pull' | 'push' | 'branch' | 'stash' | 'tag' | 'merge' | 'remote' | 'exit';
 }
 
 export async function promptMainMenu(status: GitStatus): Promise<MainMenuChoice> {
     const choices = [];
 
-    if (status.staged.length > 0) {
-        choices.push({ name: '📝 Staged dosyaları commit\'le', value: 'commit' });
-        choices.push({ name: '📤 Commit\'le ve push\'la', value: 'commit-push' });
-    }
-
-    if (status.modified.length > 0 || status.untracked.length > 0) {
-        choices.push({ name: '➕ Dosyaları stage\'le', value: 'stage' });
-    }
-
+    // Temel Git işlemleri - her zaman göster
     choices.push(
+        new inquirer.Separator('─── Git İşlemleri ───')
+    );
+
+    // Stage
+    if (status.modified.length > 0 || status.untracked.length > 0) {
+        choices.push({ name: `➕ Dosyaları stage'le (${status.modified.length + status.untracked.length} dosya)`, value: 'stage' });
+    } else {
+        choices.push({ name: '➕ Dosyaları stage\'le', value: 'stage', disabled: 'Değişiklik yok' });
+    }
+
+    // Commit
+    if (status.staged.length > 0) {
+        choices.push({ name: `📝 Commit yap (${status.staged.length} staged dosya)`, value: 'commit' });
+        choices.push({ name: '📤 Commit\'le ve push\'la', value: 'commit-push' });
+    } else {
+        choices.push({ name: '📝 Commit yap', value: 'commit', disabled: 'Staged dosya yok' });
+    }
+
+    // Push
+    if (status.ahead > 0) {
+        choices.push({ name: `⬆️ Push yap (${status.ahead} commit önde)`, value: 'push' });
+    } else {
+        choices.push({ name: '⬆️ Push yap', value: 'push' });
+    }
+
+    // Pull  
+    if (status.behind > 0) {
+        choices.push({ name: `⬇️ Pull yap (${status.behind} commit geride)`, value: 'pull' });
+    } else {
+        choices.push({ name: '⬇️ Pull yap', value: 'pull' });
+    }
+
+    // Görüntüleme
+    choices.push(
+        new inquirer.Separator('─── Görüntüle ───'),
         { name: '📊 Detaylı durumu görüntüle', value: 'status' },
         { name: '🔍 Diff görüntüle', value: 'diff' },
         { name: '📋 Geçmişi görüntüle', value: 'history' }
     );
 
-    if (status.behind > 0) {
-        choices.push({ name: '⬇️ Son değişiklikleri çek (pull)', value: 'pull' });
-    }
-
-    // New features
+    // Gelişmiş özellikler
     choices.push(
         new inquirer.Separator('─── Gelişmiş Özellikler ───'),
         { name: '🔀 Branch yönetimi', value: 'branch' },
         { name: '📦 Stash yönetimi', value: 'stash' },
         { name: '🏷️ Tag yönetimi', value: 'tag' },
         { name: '⚔️ Merge/Rebase', value: 'merge' },
-        { name: '🔗 Remote yönetimi (repo değiştir)', value: 'remote' }
+        { name: '🔗 Remote yönetimi', value: 'remote' }
     );
 
     choices.push(

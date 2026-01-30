@@ -7,6 +7,10 @@ const status_1 = require("./commands/status");
 const commit_1 = require("./commands/commit");
 const push_1 = require("./commands/push");
 const history_1 = require("./commands/history");
+const branch_1 = require("./commands/branch");
+const stash_1 = require("./commands/stash");
+const tag_1 = require("./commands/tag");
+const merge_1 = require("./commands/merge");
 const init_1 = require("./commands/init");
 commander_1.program
     .name('git-helper')
@@ -31,9 +35,29 @@ commander_1.program
     .option('-n, --number <count>', 'Gösterilecek commit sayısı', '10')
     .action((options) => (0, history_1.showHistory)(parseInt(options.number)));
 commander_1.program
+    .command('branch')
+    .alias('b')
+    .description('Branch yönetimi')
+    .action(branch_1.manageBranches);
+commander_1.program
+    .command('stash')
+    .alias('s')
+    .description('Stash yönetimi')
+    .action(stash_1.manageStash);
+commander_1.program
+    .command('tag')
+    .alias('t')
+    .description('Tag yönetimi')
+    .action(tag_1.manageTags);
+commander_1.program
+    .command('merge')
+    .alias('m')
+    .description('Merge/Rebase ve conflict yönetimi')
+    .action(merge_1.manageMergeRebase);
+commander_1.program
     .command('init')
     .alias('i')
-    .description('Git repo başlat ve remote bağla (GitHub, GitLab, Bitbucket, Azure DevOps)')
+    .description('Git repo başlat ve remote bağla')
     .action(init_1.initRepository);
 commander_1.program
     .command('clone')

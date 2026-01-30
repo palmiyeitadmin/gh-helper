@@ -79,6 +79,10 @@ export async function showDashboard(): Promise<void> {
                     await handlePull();
                     break;
 
+                case 'push':
+                    await handlePush();
+                    break;
+
                 case 'branch':
                     await manageBranches();
                     running = false;

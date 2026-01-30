@@ -6,6 +6,10 @@ import { showStatus } from './commands/status';
 import { interactiveCommit } from './commands/commit';
 import { pushToGithub } from './commands/push';
 import { showHistory } from './commands/history';
+import { manageBranches } from './commands/branch';
+import { manageStash } from './commands/stash';
+import { manageTags } from './commands/tag';
+import { manageMergeRebase } from './commands/merge';
 import { initRepository, cloneRepository } from './commands/init';
 
 program
@@ -36,9 +40,33 @@ program
     .action((options) => showHistory(parseInt(options.number)));
 
 program
+    .command('branch')
+    .alias('b')
+    .description('Branch yönetimi')
+    .action(manageBranches);
+
+program
+    .command('stash')
+    .alias('s')
+    .description('Stash yönetimi')
+    .action(manageStash);
+
+program
+    .command('tag')
+    .alias('t')
+    .description('Tag yönetimi')
+    .action(manageTags);
+
+program
+    .command('merge')
+    .alias('m')
+    .description('Merge/Rebase ve conflict yönetimi')
+    .action(manageMergeRebase);
+
+program
     .command('init')
     .alias('i')
-    .description('Git repo başlat ve remote bağla (GitHub, GitLab, Bitbucket, Azure DevOps)')
+    .description('Git repo başlat ve remote bağla')
     .action(initRepository);
 
 program
