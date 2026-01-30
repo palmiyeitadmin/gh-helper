@@ -25,13 +25,16 @@ async function promptMainMenu(status) {
     if (status.behind > 0) {
         choices.push({ name: '⬇️ Son değişiklikleri çek (pull)', value: 'pull' });
     }
-    choices.push({ name: '❌ Çıkış', value: 'exit' });
+    // New features
+    choices.push(new inquirer_1.default.Separator('─── Gelişmiş Özellikler ───'), { name: '🔀 Branch yönetimi', value: 'branch' }, { name: '📦 Stash yönetimi', value: 'stash' }, { name: '🏷️ Tag yönetimi', value: 'tag' }, { name: '⚔️ Merge/Rebase', value: 'merge' }, { name: '🔗 Remote yönetimi (repo değiştir)', value: 'remote' });
+    choices.push(new inquirer_1.default.Separator(), { name: '❌ Çıkış', value: 'exit' });
     const { action } = await inquirer_1.default.prompt([
         {
             type: 'list',
             name: 'action',
             message: 'Ne yapmak istersiniz?',
-            choices
+            choices,
+            pageSize: 15
         }
     ]);
     return { action };

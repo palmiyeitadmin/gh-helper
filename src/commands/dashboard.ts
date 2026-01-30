@@ -1,4 +1,5 @@
 import ora from 'ora';
+import inquirer from 'inquirer';
 import { gitOps } from '../git/operations';
 import {
     displayHeader,
@@ -16,6 +17,11 @@ import {
     promptConfirmAction
 } from '../ui/prompts';
 import { generateCommitSuggestion } from '../ai/suggest';
+import { manageBranches } from './branch';
+import { manageStash } from './stash';
+import { manageTags } from './tag';
+import { manageMergeRebase } from './merge';
+import { initRepository } from './init';
 
 export async function showDashboard(): Promise<void> {
     try {
@@ -71,6 +77,31 @@ export async function showDashboard(): Promise<void> {
 
                 case 'pull':
                     await handlePull();
+                    break;
+
+                case 'branch':
+                    await manageBranches();
+                    running = false;
+                    break;
+
+                case 'stash':
+                    await manageStash();
+                    running = false;
+                    break;
+
+                case 'tag':
+                    await manageTags();
+                    running = false;
+                    break;
+
+                case 'merge':
+                    await manageMergeRebase();
+                    running = false;
+                    break;
+
+                case 'remote':
+                    await initRepository();
+                    running = false;
                     break;
 
                 case 'exit':

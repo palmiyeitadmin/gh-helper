@@ -7,6 +7,7 @@ const status_1 = require("./commands/status");
 const commit_1 = require("./commands/commit");
 const push_1 = require("./commands/push");
 const history_1 = require("./commands/history");
+const init_1 = require("./commands/init");
 commander_1.program
     .name('git-helper')
     .description('AI destekli commit mesaj önerileri ile interaktif Git CLI yardımcısı')
@@ -29,6 +30,16 @@ commander_1.program
     .description('Son commit\'leri göster')
     .option('-n, --number <count>', 'Gösterilecek commit sayısı', '10')
     .action((options) => (0, history_1.showHistory)(parseInt(options.number)));
+commander_1.program
+    .command('init')
+    .alias('i')
+    .description('Git repo başlat ve remote bağla (GitHub, GitLab, Bitbucket, Azure DevOps)')
+    .action(init_1.initRepository);
+commander_1.program
+    .command('clone')
+    .alias('c')
+    .description('Uzak repoyu klonla')
+    .action(init_1.cloneRepository);
 // Default: show interactive dashboard
 if (process.argv.length === 2) {
     (0, dashboard_1.showDashboard)();

@@ -5,16 +5,16 @@ exports.getCommitTypes = getCommitTypes;
 exports.formatConventionalCommit = formatConventionalCommit;
 const operations_1 = require("../git/operations");
 const TYPE_DESCRIPTIONS = {
-    feat: 'A new feature',
-    fix: 'A bug fix',
-    docs: 'Documentation only changes',
-    style: 'Code style changes (formatting, semicolons, etc)',
-    refactor: 'Code refactoring without changing functionality',
-    test: 'Adding or updating tests',
-    chore: 'Maintenance tasks, dependencies, etc',
-    perf: 'Performance improvements',
-    build: 'Build system or external dependencies',
-    ci: 'CI/CD configuration changes'
+    feat: 'Yeni özellik',
+    fix: 'Hata düzeltme',
+    docs: 'Sadece dokümantasyon değişiklikleri',
+    style: 'Kod stili değişiklikleri (formatlama, noktalı virgül, vb.)',
+    refactor: 'İşlevselliği değiştirmeden kod yeniden düzenleme',
+    test: 'Test ekleme veya güncelleme',
+    chore: 'Bakım görevleri, bağımlılıklar, vb.',
+    perf: 'Performans iyileştirmeleri',
+    build: 'Build sistemi veya harici bağımlılıklar',
+    ci: 'CI/CD yapılandırma değişiklikleri'
 };
 async function generateCommitSuggestion() {
     const stagedFiles = await operations_1.gitOps.getStagedFiles();
@@ -111,19 +111,19 @@ function generateMessage(patterns, files, type) {
         const baseName = fileName.replace(/\.(ts|tsx|js|jsx|md|json|yml|yaml|css|scss)$/, '');
         switch (type) {
             case 'docs':
-                return `update ${baseName} documentation`;
+                return `${baseName} dokümantasyonu güncellendi`;
             case 'test':
-                return `add tests for ${baseName}`;
+                return `${baseName} için testler eklendi`;
             case 'style':
-                return `update ${baseName} styles`;
+                return `${baseName} stilleri güncellendi`;
             case 'chore':
                 if (fileName === 'package.json')
-                    return 'update dependencies';
-                return `update ${baseName} configuration`;
+                    return 'bağımlılıklar güncellendi';
+                return `${baseName} yapılandırması güncellendi`;
             case 'ci':
-                return `update ${baseName} workflow`;
+                return `${baseName} workflow güncellendi`;
             default:
-                return `update ${baseName}`;
+                return `${baseName} güncellendi`;
         }
     }
     // Multiple files
@@ -132,22 +132,22 @@ function generateMessage(patterns, files, type) {
         if (componentFiles.length > 0) {
             const componentDir = componentFiles[0].match(/\/components\/([^\/]+)/);
             if (componentDir) {
-                return `update ${componentDir[1]} component`;
+                return `${componentDir[1]} bileşeni güncellendi`;
             }
         }
-        return 'update components';
+        return 'bileşenler güncellendi';
     }
     if (patterns.hasApiFiles) {
-        return 'update API endpoints';
+        return 'API endpoint\'leri güncellendi';
     }
     if (patterns.hasDocFiles) {
-        return 'update documentation';
+        return 'dokümantasyon güncellendi';
     }
     if (patterns.hasConfigFiles) {
-        return 'update configuration';
+        return 'yapılandırma güncellendi';
     }
     // Generic message based on file count
-    return `update ${files.length} files`;
+    return `${files.length} dosya güncellendi`;
 }
 function getCommitTypes() {
     return Object.entries(TYPE_DESCRIPTIONS).map(([value, description]) => ({

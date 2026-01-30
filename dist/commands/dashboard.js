@@ -9,6 +9,11 @@ const operations_1 = require("../git/operations");
 const display_1 = require("../ui/display");
 const prompts_1 = require("../ui/prompts");
 const suggest_1 = require("../ai/suggest");
+const branch_1 = require("./branch");
+const stash_1 = require("./stash");
+const tag_1 = require("./tag");
+const merge_1 = require("./merge");
+const init_1 = require("./init");
 async function showDashboard() {
     try {
         const projectName = operations_1.gitOps.getProjectName();
@@ -51,6 +56,26 @@ async function showDashboard() {
                     break;
                 case 'pull':
                     await handlePull();
+                    break;
+                case 'branch':
+                    await (0, branch_1.manageBranches)();
+                    running = false;
+                    break;
+                case 'stash':
+                    await (0, stash_1.manageStash)();
+                    running = false;
+                    break;
+                case 'tag':
+                    await (0, tag_1.manageTags)();
+                    running = false;
+                    break;
+                case 'merge':
+                    await (0, merge_1.manageMergeRebase)();
+                    running = false;
+                    break;
+                case 'remote':
+                    await (0, init_1.initRepository)();
+                    running = false;
                     break;
                 case 'exit':
                     running = false;

@@ -2,7 +2,7 @@ import inquirer from 'inquirer';
 import { gitOps, GitStatus } from '../git/operations';
 
 export interface MainMenuChoice {
-    action: 'commit' | 'commit-push' | 'status' | 'diff' | 'history' | 'stage' | 'pull' | 'exit';
+    action: 'commit' | 'commit-push' | 'status' | 'diff' | 'history' | 'stage' | 'pull' | 'branch' | 'stash' | 'tag' | 'merge' | 'remote' | 'exit';
 }
 
 export async function promptMainMenu(status: GitStatus): Promise<MainMenuChoice> {
@@ -27,14 +27,28 @@ export async function promptMainMenu(status: GitStatus): Promise<MainMenuChoice>
         choices.push({ name: '⬇️ Son değişiklikleri çek (pull)', value: 'pull' });
     }
 
-    choices.push({ name: '❌ Çıkış', value: 'exit' });
+    // New features
+    choices.push(
+        new inquirer.Separator('─── Gelişmiş Özellikler ───'),
+        { name: '🔀 Branch yönetimi', value: 'branch' },
+        { name: '📦 Stash yönetimi', value: 'stash' },
+        { name: '🏷️ Tag yönetimi', value: 'tag' },
+        { name: '⚔️ Merge/Rebase', value: 'merge' },
+        { name: '🔗 Remote yönetimi (repo değiştir)', value: 'remote' }
+    );
+
+    choices.push(
+        new inquirer.Separator(),
+        { name: '❌ Çıkış', value: 'exit' }
+    );
 
     const { action } = await inquirer.prompt([
         {
             type: 'list',
             name: 'action',
             message: 'Ne yapmak istersiniz?',
-            choices
+            choices,
+            pageSize: 15
         }
     ]);
 
