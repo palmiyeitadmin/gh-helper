@@ -3,23 +3,35 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.manageBranchesMenu = manageBranchesMenu;
 exports.manageBranches = manageBranches;
 const ora_1 = __importDefault(require("ora"));
 const chalk_1 = __importDefault(require("chalk"));
 const inquirer_1 = __importDefault(require("inquirer"));
 const operations_1 = require("../git/operations");
 const display_1 = require("../ui/display");
+// Dashboard'dan çağrılan loop'lu menü
+async function manageBranchesMenu() {
+    let running = true;
+    while (running) {
+        const shouldContinue = await showBranchMenuWithReturn();
+        if (!shouldContinue) {
+            running = false;
+        }
+    }
+}
+// Standalone CLI komutu için
 async function manageBranches() {
     const projectName = operations_1.gitOps.getProjectName();
     (0, display_1.displayHeader)(projectName);
     try {
-        await showBranchMenu();
+        await showBranchMenuWithReturn();
     }
     catch (error) {
         (0, display_1.displayError)(`Branch işlemi başarısız: ${error}`);
     }
 }
-async function showBranchMenu() {
+async function showBranchMenuWithReturn() {
     const currentBranch = await operations_1.gitOps.getCurrentBranch();
     const branches = await operations_1.gitOps.getLocalBranches();
     console.log(`\n📊 Mevcut branch: ${chalk_1.default.cyan(currentBranch)}`);
@@ -40,10 +52,13 @@ async function showBranchMenu() {
                 { name: '✏️ Branch yeniden adlandır', value: 'rename' },
                 { name: '🗑️ Branch sil', value: 'delete' },
                 { name: '📋 Tüm branch\'ları listele (remote dahil)', value: 'list-all' },
-                { name: '❌ Geri dön', value: 'back' }
+                { name: '⬅️ Ana menüye dön', value: 'back' }
             ]
         }
     ]);
+    if (action === 'back') {
+        return false;
+    }
     switch (action) {
         case 'switch':
             await switchBranch(branches.filter(b => !b.current).map(b => b.name));
@@ -61,6 +76,7 @@ async function showBranchMenu() {
             await listAllBranches();
             break;
     }
+    return true;
 }
 async function switchBranch(availableBranches) {
     if (availableBranches.length === 0) {

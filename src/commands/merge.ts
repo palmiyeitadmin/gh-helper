@@ -4,18 +4,30 @@ import inquirer from 'inquirer';
 import { gitOps } from '../git/operations';
 import { displayHeader, displaySuccess, displayError, displayWarning } from '../ui/display';
 
+// Dashboard'dan çağrılan loop'lu menü
+export async function manageMergeRebaseMenu(): Promise<void> {
+    let running = true;
+    while (running) {
+        const shouldContinue = await showMergeRebaseMenuWithReturn();
+        if (!shouldContinue) {
+            running = false;
+        }
+    }
+}
+
+// Standalone CLI komutu için
 export async function manageMergeRebase(): Promise<void> {
     const projectName = gitOps.getProjectName();
     displayHeader(projectName);
 
     try {
-        await showMergeRebaseMenu();
+        await showMergeRebaseMenuWithReturn();
     } catch (error) {
         displayError(`İşlem başarısız: ${error}`);
     }
 }
 
-async function showMergeRebaseMenu(): Promise<void> {
+async function showMergeRebaseMenuWithReturn(): Promise<boolean> {
     const currentBranch = await gitOps.getCurrentBranch();
     const branches = await gitOps.getLocalBranches();
     const otherBranches = branches.filter(b => !b.current);
@@ -49,7 +61,7 @@ async function showMergeRebaseMenu(): Promise<void> {
         );
     }
 
-    choices.push({ name: '❌ Geri dön', value: 'back' });
+    choices.push({ name: '⬅️ Ana menüye dön', value: 'back' });
 
     const { action } = await inquirer.prompt([
         {
@@ -59,6 +71,10 @@ async function showMergeRebaseMenu(): Promise<void> {
             choices
         }
     ]);
+
+    if (action === 'back') {
+        return false;
+    }
 
     switch (action) {
         case 'merge':
@@ -83,6 +99,7 @@ async function showMergeRebaseMenu(): Promise<void> {
             await resetChanges();
             break;
     }
+    return true;
 }
 
 async function performMerge(branches: string[]): Promise<void> {

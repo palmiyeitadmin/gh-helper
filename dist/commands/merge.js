@@ -3,23 +3,35 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.manageMergeRebaseMenu = manageMergeRebaseMenu;
 exports.manageMergeRebase = manageMergeRebase;
 const ora_1 = __importDefault(require("ora"));
 const chalk_1 = __importDefault(require("chalk"));
 const inquirer_1 = __importDefault(require("inquirer"));
 const operations_1 = require("../git/operations");
 const display_1 = require("../ui/display");
+// Dashboard'dan çağrılan loop'lu menü
+async function manageMergeRebaseMenu() {
+    let running = true;
+    while (running) {
+        const shouldContinue = await showMergeRebaseMenuWithReturn();
+        if (!shouldContinue) {
+            running = false;
+        }
+    }
+}
+// Standalone CLI komutu için
 async function manageMergeRebase() {
     const projectName = operations_1.gitOps.getProjectName();
     (0, display_1.displayHeader)(projectName);
     try {
-        await showMergeRebaseMenu();
+        await showMergeRebaseMenuWithReturn();
     }
     catch (error) {
         (0, display_1.displayError)(`İşlem başarısız: ${error}`);
     }
 }
-async function showMergeRebaseMenu() {
+async function showMergeRebaseMenuWithReturn() {
     const currentBranch = await operations_1.gitOps.getCurrentBranch();
     const branches = await operations_1.gitOps.getLocalBranches();
     const otherBranches = branches.filter(b => !b.current);
@@ -39,7 +51,7 @@ async function showMergeRebaseMenu() {
         }
         choices.push({ name: '🔙 Son commit\'i geri al (revert)', value: 'revert' }, { name: '↩️ Reset (değişiklikleri geri al)', value: 'reset' });
     }
-    choices.push({ name: '❌ Geri dön', value: 'back' });
+    choices.push({ name: '⬅️ Ana menüye dön', value: 'back' });
     const { action } = await inquirer_1.default.prompt([
         {
             type: 'list',
@@ -48,6 +60,9 @@ async function showMergeRebaseMenu() {
             choices
         }
     ]);
+    if (action === 'back') {
+        return false;
+    }
     switch (action) {
         case 'merge':
             await performMerge(otherBranches.map(b => b.name));
@@ -71,6 +86,7 @@ async function showMergeRebaseMenu() {
             await resetChanges();
             break;
     }
+    return true;
 }
 async function performMerge(branches) {
     if (branches.length === 0) {

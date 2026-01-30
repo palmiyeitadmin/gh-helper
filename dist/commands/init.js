@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.initRepositoryMenu = initRepositoryMenu;
 exports.initRepository = initRepository;
 exports.cloneRepository = cloneRepository;
 const ora_1 = __importDefault(require("ora"));
@@ -36,6 +37,10 @@ function parseGitUrl(url) {
         return { username: sshMatch[1], repoName: sshMatch[2] };
     }
     return null;
+}
+// Dashboard'dan çağrılan menü (tek seferde döner)
+async function initRepositoryMenu() {
+    await initRepository();
 }
 async function initRepository() {
     const projectName = path_1.default.basename(process.cwd());

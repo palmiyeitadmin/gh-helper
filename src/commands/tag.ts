@@ -4,18 +4,30 @@ import inquirer from 'inquirer';
 import { gitOps } from '../git/operations';
 import { displayHeader, displaySuccess, displayError, displayWarning } from '../ui/display';
 
+// Dashboard'dan çağrılan loop'lu menü
+export async function manageTagsMenu(): Promise<void> {
+    let running = true;
+    while (running) {
+        const shouldContinue = await showTagMenuWithReturn();
+        if (!shouldContinue) {
+            running = false;
+        }
+    }
+}
+
+// Standalone CLI komutu için
 export async function manageTags(): Promise<void> {
     const projectName = gitOps.getProjectName();
     displayHeader(projectName);
 
     try {
-        await showTagMenu();
+        await showTagMenuWithReturn();
     } catch (error) {
         displayError(`Tag işlemi başarısız: ${error}`);
     }
 }
 
-async function showTagMenu(): Promise<void> {
+async function showTagMenuWithReturn(): Promise<boolean> {
     const spinner = ora('Tag\'ler yükleniyor...').start();
     const tags = await gitOps.getTags();
     spinner.stop();
@@ -47,7 +59,7 @@ async function showTagMenu(): Promise<void> {
         );
     }
 
-    choices.push({ name: '❌ Geri dön', value: 'back' });
+    choices.push({ name: '⬅️ Ana menüye dön', value: 'back' });
 
     const { action } = await inquirer.prompt([
         {
@@ -57,6 +69,10 @@ async function showTagMenu(): Promise<void> {
             choices
         }
     ]);
+
+    if (action === 'back') {
+        return false;
+    }
 
     switch (action) {
         case 'create':
@@ -75,6 +91,7 @@ async function showTagMenu(): Promise<void> {
             await listAllTags();
             break;
     }
+    return true;
 }
 
 async function createTag(): Promise<void> {

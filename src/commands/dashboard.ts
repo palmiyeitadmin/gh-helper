@@ -1,5 +1,6 @@
 import ora from 'ora';
 import inquirer from 'inquirer';
+import chalk from 'chalk';
 import { gitOps } from '../git/operations';
 import {
     displayHeader,
@@ -10,57 +11,53 @@ import {
     displayCommitSuggestion
 } from '../ui/display';
 import {
-    promptMainMenu,
     promptStageFiles,
     promptCommitMessage,
-    promptConfirmPush,
-    promptConfirmAction
+    promptConfirmPush
 } from '../ui/prompts';
 import { generateCommitSuggestion } from '../ai/suggest';
-import { manageBranches } from './branch';
-import { manageStash } from './stash';
-import { manageTags } from './tag';
-import { manageMergeRebase } from './merge';
-import { initRepository } from './init';
-import { manageGitignore } from './gitignore';
+
+// Sub-menu functions - imported inline to avoid circular dependencies
+import { manageBranchesMenu } from './branch';
+import { manageStashMenu } from './stash';
+import { manageTagsMenu } from './tag';
+import { manageMergeRebaseMenu } from './merge';
+import { initRepositoryMenu } from './init';
+import { manageGitignoreMenu } from './gitignore';
 
 export async function showDashboard(): Promise<void> {
-    try {
-        const projectName = gitOps.getProjectName();
-        displayHeader(projectName);
+    let running = true;
 
-        const spinner = ora('Git durumu yükleniyor...').start();
+    while (running) {
+        try {
+            console.clear();
+            const projectName = gitOps.getProjectName();
+            displayHeader(projectName);
 
-        const status = await gitOps.getStatus();
-        const commits = await gitOps.getRecentCommits(5);
+            const spinner = ora('Git durumu yükleniyor...').start();
 
-        spinner.stop();
+            const status = await gitOps.getStatus();
+            const commits = await gitOps.getRecentCommits(5);
 
-        displayStatus(status);
-        displayRecentCommits(commits);
+            spinner.stop();
 
-        // Interactive menu loop
-        let running = true;
-        while (running) {
+            displayStatus(status);
+            displayRecentCommits(commits);
+
             console.log();
-            const { action } = await promptMainMenu(status);
+            const { action } = await promptMainDashboardMenu(status);
 
             switch (action) {
                 case 'commit':
                     await handleCommit(false);
-                    running = false;
                     break;
 
                 case 'commit-push':
                     await handleCommit(true);
-                    running = false;
                     break;
 
                 case 'stage':
                     await handleStage();
-                    // Refresh status and continue
-                    const newStatus = await gitOps.getStatus();
-                    displayStatus(newStatus);
                     break;
 
                 case 'status':
@@ -74,6 +71,7 @@ export async function showDashboard(): Promise<void> {
                 case 'history':
                     const allCommits = await gitOps.getRecentCommits(10);
                     displayRecentCommits(allCommits);
+                    await waitForEnter();
                     break;
 
                 case 'pull':
@@ -85,33 +83,27 @@ export async function showDashboard(): Promise<void> {
                     break;
 
                 case 'branch':
-                    await manageBranches();
-                    running = false;
+                    await manageBranchesMenu();
                     break;
 
                 case 'stash':
-                    await manageStash();
-                    running = false;
+                    await manageStashMenu();
                     break;
 
                 case 'tag':
-                    await manageTags();
-                    running = false;
+                    await manageTagsMenu();
                     break;
 
                 case 'merge':
-                    await manageMergeRebase();
-                    running = false;
+                    await manageMergeRebaseMenu();
                     break;
 
                 case 'remote':
-                    await initRepository();
-                    running = false;
+                    await initRepositoryMenu();
                     break;
 
                 case 'gitignore':
-                    await manageGitignore();
-                    running = false;
+                    await manageGitignoreMenu();
                     break;
 
                 case 'exit':
@@ -119,11 +111,85 @@ export async function showDashboard(): Promise<void> {
                     console.log('\n👋 Görüşmek üzere!\n');
                     break;
             }
+        } catch (error) {
+            displayError(`Hata: ${error}`);
+            await waitForEnter();
         }
-    } catch (error) {
-        displayError(`Dashboard yüklenemedi: ${error}`);
-        process.exit(1);
     }
+}
+
+async function promptMainDashboardMenu(status: any): Promise<{ action: string }> {
+    const choices = [];
+
+    // Git İşlemleri
+    choices.push(new inquirer.Separator('─── Git İşlemleri ───'));
+
+    // Stage
+    if (status.modified.length > 0 || status.untracked.length > 0) {
+        choices.push({ name: `➕ Dosyaları stage'le (${status.modified.length + status.untracked.length} dosya)`, value: 'stage' });
+    }
+
+    // Commit
+    if (status.staged.length > 0) {
+        choices.push({ name: `📝 Commit yap (${status.staged.length} staged dosya)`, value: 'commit' });
+        choices.push({ name: '📤 Commit\'le ve push\'la', value: 'commit-push' });
+    }
+
+    // Push
+    if (status.ahead > 0) {
+        choices.push({ name: `⬆️ Push yap (${status.ahead} commit önde)`, value: 'push' });
+    } else {
+        choices.push({ name: '⬆️ Push yap', value: 'push' });
+    }
+
+    // Pull
+    if (status.behind > 0) {
+        choices.push({ name: `⬇️ Pull yap (${status.behind} commit geride)`, value: 'pull' });
+    } else {
+        choices.push({ name: '⬇️ Pull yap', value: 'pull' });
+    }
+
+    // Görüntüleme
+    choices.push(
+        new inquirer.Separator('─── Görüntüle ───'),
+        { name: '📊 Detaylı durumu görüntüle', value: 'status' },
+        { name: '🔍 Diff görüntüle', value: 'diff' },
+        { name: '📋 Geçmişi görüntüle', value: 'history' }
+    );
+
+    // Gelişmiş özellikler
+    choices.push(
+        new inquirer.Separator('─── Gelişmiş Özellikler ───'),
+        { name: '🔀 Branch yönetimi', value: 'branch' },
+        { name: '📦 Stash yönetimi', value: 'stash' },
+        { name: '🏷️ Tag yönetimi', value: 'tag' },
+        { name: '⚔️ Merge/Rebase', value: 'merge' },
+        { name: '🔗 Remote yönetimi', value: 'remote' },
+        { name: '📝 .gitignore yönetimi', value: 'gitignore' }
+    );
+
+    choices.push(
+        new inquirer.Separator(),
+        { name: '❌ Çıkış', value: 'exit' }
+    );
+
+    const { action } = await inquirer.prompt([{
+        type: 'list',
+        name: 'action',
+        message: 'Ne yapmak istersiniz?',
+        choices,
+        pageSize: 20
+    }]);
+
+    return { action };
+}
+
+async function waitForEnter(): Promise<void> {
+    await inquirer.prompt([{
+        type: 'input',
+        name: 'continue',
+        message: chalk.gray('Devam etmek için Enter\'a basın...')
+    }]);
 }
 
 async function handleCommit(pushAfter: boolean): Promise<void> {
@@ -134,22 +200,20 @@ async function handleCommit(pushAfter: boolean): Promise<void> {
     if (stagedFiles.length === 0) {
         spinner.stop();
         displayError('Staged dosya yok. Önce dosyaları stage\'leyin.');
+        await waitForEnter();
         return;
     }
 
-    // Generate AI suggestion
     const suggestion = await generateCommitSuggestion();
     spinner.stop();
 
     displayCommitSuggestion(suggestion.fullMessage);
 
-    // Get commit message
     const commitMessage = await promptCommitMessage(suggestion.fullMessage);
 
-    // Commit
     const commitSpinner = ora('Commit yapılıyor...').start();
     try {
-        const hash = await gitOps.commit(commitMessage);
+        await gitOps.commit(commitMessage);
         commitSpinner.succeed(`Commit yapıldı: ${commitMessage}`);
 
         if (pushAfter) {
@@ -163,6 +227,7 @@ async function handleCommit(pushAfter: boolean): Promise<void> {
     } catch (error) {
         commitSpinner.fail(`Commit başarısız: ${error}`);
     }
+    await waitForEnter();
 }
 
 async function handleStage(): Promise<void> {
@@ -171,6 +236,7 @@ async function handleStage(): Promise<void> {
 
     if (unstaged.length === 0) {
         displaySuccess('Tüm dosyalar zaten staged!');
+        await waitForEnter();
         return;
     }
 
@@ -188,7 +254,8 @@ async function handleStage(): Promise<void> {
         await gitOps.stageFiles(filesToStage);
     }
 
-    spinner.succeed(`${filesToStage.length} dosya stage\'lendi`);
+    spinner.succeed(`${filesToStage.length} dosya stage'lendi`);
+    await waitForEnter();
 }
 
 async function handlePush(): Promise<void> {
@@ -211,6 +278,7 @@ async function handlePull(): Promise<void> {
     } catch (error) {
         spinner.fail(`Pull başarısız: ${error}`);
     }
+    await waitForEnter();
 }
 
 async function showDetailedStatus(): Promise<void> {
@@ -219,6 +287,7 @@ async function showDetailedStatus(): Promise<void> {
 
     console.log(`\n📍 Remote: ${remoteUrl}`);
     displayStatus(status);
+    await waitForEnter();
 }
 
 async function showDiff(): Promise<void> {
@@ -242,4 +311,5 @@ async function showDiff(): Promise<void> {
     if (!stagedDiff && !unstagedDiff) {
         console.log('\nDeğişiklik algılanmadı.');
     }
+    await waitForEnter();
 }

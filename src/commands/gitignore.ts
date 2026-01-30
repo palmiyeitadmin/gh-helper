@@ -83,10 +83,25 @@ const GITIGNORE_TEMPLATES: Record<string, string[]> = {
     ]
 };
 
+// Dashboard'dan çağrılan loop'lu menü
+export async function manageGitignoreMenu(): Promise<void> {
+    let running = true;
+    while (running) {
+        const shouldContinue = await showGitignoreMenuWithReturn();
+        if (!shouldContinue) {
+            running = false;
+        }
+    }
+}
+
+// Standalone CLI komutu için
 export async function manageGitignore(): Promise<void> {
     const projectName = path.basename(process.cwd());
     displayHeader(projectName);
+    await showGitignoreMenuWithReturn();
+}
 
+async function showGitignoreMenuWithReturn(): Promise<boolean> {
     const gitignorePath = path.join(process.cwd(), '.gitignore');
     const exists = fs.existsSync(gitignorePath);
 
@@ -124,9 +139,13 @@ export async function manageGitignore(): Promise<void> {
             { name: '🗑️ Kural sil', value: 'remove', disabled: currentContent.length === 0 ? 'Kural yok' : false },
             { name: '👁️ Tüm kuralları görüntüle', value: 'view', disabled: currentContent.length === 0 ? 'Kural yok' : false },
             { name: '🔄 Sıfırla ve yeni oluştur', value: 'reset' },
-            { name: '❌ Geri dön', value: 'back' }
+            { name: '⬅️ Ana menüye dön', value: 'back' }
         ]
     }]);
+
+    if (action === 'back') {
+        return false;
+    }
 
     switch (action) {
         case 'template':
@@ -145,6 +164,7 @@ export async function manageGitignore(): Promise<void> {
             await resetGitignore(gitignorePath);
             break;
     }
+    return true;
 }
 
 async function addFromTemplate(gitignorePath: string, currentContent: string[]): Promise<void> {

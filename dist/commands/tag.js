@@ -3,23 +3,35 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.manageTagsMenu = manageTagsMenu;
 exports.manageTags = manageTags;
 const ora_1 = __importDefault(require("ora"));
 const chalk_1 = __importDefault(require("chalk"));
 const inquirer_1 = __importDefault(require("inquirer"));
 const operations_1 = require("../git/operations");
 const display_1 = require("../ui/display");
+// Dashboard'dan çağrılan loop'lu menü
+async function manageTagsMenu() {
+    let running = true;
+    while (running) {
+        const shouldContinue = await showTagMenuWithReturn();
+        if (!shouldContinue) {
+            running = false;
+        }
+    }
+}
+// Standalone CLI komutu için
 async function manageTags() {
     const projectName = operations_1.gitOps.getProjectName();
     (0, display_1.displayHeader)(projectName);
     try {
-        await showTagMenu();
+        await showTagMenuWithReturn();
     }
     catch (error) {
         (0, display_1.displayError)(`Tag işlemi başarısız: ${error}`);
     }
 }
-async function showTagMenu() {
+async function showTagMenuWithReturn() {
     const spinner = (0, ora_1.default)('Tag\'ler yükleniyor...').start();
     const tags = await operations_1.gitOps.getTags();
     spinner.stop();
@@ -42,7 +54,7 @@ async function showTagMenu() {
     if (tags.length > 0) {
         choices.push({ name: '📤 Tag\'i push\'la', value: 'push' }, { name: '📤 Tüm tag\'leri push\'la', value: 'push-all' }, { name: '🗑️ Tag sil', value: 'delete' }, { name: '📋 Tüm tag\'leri listele', value: 'list-all' });
     }
-    choices.push({ name: '❌ Geri dön', value: 'back' });
+    choices.push({ name: '⬅️ Ana menüye dön', value: 'back' });
     const { action } = await inquirer_1.default.prompt([
         {
             type: 'list',
@@ -51,6 +63,9 @@ async function showTagMenu() {
             choices
         }
     ]);
+    if (action === 'back') {
+        return false;
+    }
     switch (action) {
         case 'create':
             await createTag();
@@ -68,6 +83,7 @@ async function showTagMenu() {
             await listAllTags();
             break;
     }
+    return true;
 }
 async function createTag() {
     const { tagName, tagType } = await inquirer_1.default.prompt([

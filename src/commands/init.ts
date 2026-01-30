@@ -42,6 +42,11 @@ function parseGitUrl(url: string): { username: string; repoName: string } | null
     return null;
 }
 
+// Dashboard'dan çağrılan menü (tek seferde döner)
+export async function initRepositoryMenu(): Promise<void> {
+    await initRepository();
+}
+
 export async function initRepository(): Promise<void> {
     const projectName = path.basename(process.cwd());
     displayHeader(projectName);

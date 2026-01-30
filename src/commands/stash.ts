@@ -4,18 +4,30 @@ import inquirer from 'inquirer';
 import { gitOps } from '../git/operations';
 import { displayHeader, displaySuccess, displayError, displayWarning } from '../ui/display';
 
+// Dashboard'dan çağrılan loop'lu menü
+export async function manageStashMenu(): Promise<void> {
+    let running = true;
+    while (running) {
+        const shouldContinue = await showStashMenuWithReturn();
+        if (!shouldContinue) {
+            running = false;
+        }
+    }
+}
+
+// Standalone CLI komutu için
 export async function manageStash(): Promise<void> {
     const projectName = gitOps.getProjectName();
     displayHeader(projectName);
 
     try {
-        await showStashMenu();
+        await showStashMenuWithReturn();
     } catch (error) {
         displayError(`Stash işlemi başarısız: ${error}`);
     }
 }
 
-async function showStashMenu(): Promise<void> {
+async function showStashMenuWithReturn(): Promise<boolean> {
     const stashList = await gitOps.getStashList();
     const status = await gitOps.getStatus();
     const hasChanges = !status.isClean;
@@ -47,7 +59,7 @@ async function showStashMenu(): Promise<void> {
         );
     }
 
-    choices.push({ name: '❌ Geri dön', value: 'back' });
+    choices.push({ name: '⬅️ Ana menüye dön', value: 'back' });
 
     const { action } = await inquirer.prompt([
         {
@@ -57,6 +69,10 @@ async function showStashMenu(): Promise<void> {
             choices
         }
     ]);
+
+    if (action === 'back') {
+        return false;
+    }
 
     switch (action) {
         case 'save':
@@ -78,6 +94,7 @@ async function showStashMenu(): Promise<void> {
             await stashClear();
             break;
     }
+    return true;
 }
 
 async function stashSave(): Promise<void> {

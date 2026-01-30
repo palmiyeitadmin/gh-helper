@@ -4,18 +4,30 @@ import inquirer from 'inquirer';
 import { gitOps } from '../git/operations';
 import { displayHeader, displaySuccess, displayError, displayWarning } from '../ui/display';
 
+// Dashboard'dan çağrılan loop'lu menü
+export async function manageBranchesMenu(): Promise<void> {
+    let running = true;
+    while (running) {
+        const shouldContinue = await showBranchMenuWithReturn();
+        if (!shouldContinue) {
+            running = false;
+        }
+    }
+}
+
+// Standalone CLI komutu için
 export async function manageBranches(): Promise<void> {
     const projectName = gitOps.getProjectName();
     displayHeader(projectName);
 
     try {
-        await showBranchMenu();
+        await showBranchMenuWithReturn();
     } catch (error) {
         displayError(`Branch işlemi başarısız: ${error}`);
     }
 }
 
-async function showBranchMenu(): Promise<void> {
+async function showBranchMenuWithReturn(): Promise<boolean> {
     const currentBranch = await gitOps.getCurrentBranch();
     const branches = await gitOps.getLocalBranches();
 
@@ -39,10 +51,14 @@ async function showBranchMenu(): Promise<void> {
                 { name: '✏️ Branch yeniden adlandır', value: 'rename' },
                 { name: '🗑️ Branch sil', value: 'delete' },
                 { name: '📋 Tüm branch\'ları listele (remote dahil)', value: 'list-all' },
-                { name: '❌ Geri dön', value: 'back' }
+                { name: '⬅️ Ana menüye dön', value: 'back' }
             ]
         }
     ]);
+
+    if (action === 'back') {
+        return false;
+    }
 
     switch (action) {
         case 'switch':
@@ -61,6 +77,7 @@ async function showBranchMenu(): Promise<void> {
             await listAllBranches();
             break;
     }
+    return true;
 }
 
 async function switchBranch(availableBranches: string[]): Promise<void> {

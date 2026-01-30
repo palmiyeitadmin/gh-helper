@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.manageGitignoreMenu = manageGitignoreMenu;
 exports.manageGitignore = manageGitignore;
 const ora_1 = __importDefault(require("ora"));
 const chalk_1 = __importDefault(require("chalk"));
@@ -87,9 +88,23 @@ const GITIGNORE_TEMPLATES = {
         'yarn-error.log*'
     ]
 };
+// Dashboard'dan çağrılan loop'lu menü
+async function manageGitignoreMenu() {
+    let running = true;
+    while (running) {
+        const shouldContinue = await showGitignoreMenuWithReturn();
+        if (!shouldContinue) {
+            running = false;
+        }
+    }
+}
+// Standalone CLI komutu için
 async function manageGitignore() {
     const projectName = path_1.default.basename(process.cwd());
     (0, display_1.displayHeader)(projectName);
+    await showGitignoreMenuWithReturn();
+}
+async function showGitignoreMenuWithReturn() {
     const gitignorePath = path_1.default.join(process.cwd(), '.gitignore');
     const exists = fs_1.default.existsSync(gitignorePath);
     let currentContent = [];
@@ -124,9 +139,12 @@ async function manageGitignore() {
                 { name: '🗑️ Kural sil', value: 'remove', disabled: currentContent.length === 0 ? 'Kural yok' : false },
                 { name: '👁️ Tüm kuralları görüntüle', value: 'view', disabled: currentContent.length === 0 ? 'Kural yok' : false },
                 { name: '🔄 Sıfırla ve yeni oluştur', value: 'reset' },
-                { name: '❌ Geri dön', value: 'back' }
+                { name: '⬅️ Ana menüye dön', value: 'back' }
             ]
         }]);
+    if (action === 'back') {
+        return false;
+    }
     switch (action) {
         case 'template':
             await addFromTemplate(gitignorePath, currentContent);
@@ -144,6 +162,7 @@ async function manageGitignore() {
             await resetGitignore(gitignorePath);
             break;
     }
+    return true;
 }
 async function addFromTemplate(gitignorePath, currentContent) {
     const { templates } = await inquirer_1.default.prompt([{

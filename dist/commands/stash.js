@@ -3,23 +3,35 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.manageStashMenu = manageStashMenu;
 exports.manageStash = manageStash;
 const ora_1 = __importDefault(require("ora"));
 const chalk_1 = __importDefault(require("chalk"));
 const inquirer_1 = __importDefault(require("inquirer"));
 const operations_1 = require("../git/operations");
 const display_1 = require("../ui/display");
+// Dashboard'dan çağrılan loop'lu menü
+async function manageStashMenu() {
+    let running = true;
+    while (running) {
+        const shouldContinue = await showStashMenuWithReturn();
+        if (!shouldContinue) {
+            running = false;
+        }
+    }
+}
+// Standalone CLI komutu için
 async function manageStash() {
     const projectName = operations_1.gitOps.getProjectName();
     (0, display_1.displayHeader)(projectName);
     try {
-        await showStashMenu();
+        await showStashMenuWithReturn();
     }
     catch (error) {
         (0, display_1.displayError)(`Stash işlemi başarısız: ${error}`);
     }
 }
-async function showStashMenu() {
+async function showStashMenuWithReturn() {
     const stashList = await operations_1.gitOps.getStashList();
     const status = await operations_1.gitOps.getStatus();
     const hasChanges = !status.isClean;
@@ -40,7 +52,7 @@ async function showStashMenu() {
     if (stashList.length > 0) {
         choices.push({ name: '📤 Stash\'i uygula ve sil (pop)', value: 'pop' }, { name: '📋 Stash\'i uygula (apply)', value: 'apply' }, { name: '👁️ Stash içeriğini görüntüle', value: 'show' }, { name: '🗑️ Stash\'i sil (drop)', value: 'drop' }, { name: '🧹 Tüm stash\'leri temizle', value: 'clear' });
     }
-    choices.push({ name: '❌ Geri dön', value: 'back' });
+    choices.push({ name: '⬅️ Ana menüye dön', value: 'back' });
     const { action } = await inquirer_1.default.prompt([
         {
             type: 'list',
@@ -49,6 +61,9 @@ async function showStashMenu() {
             choices
         }
     ]);
+    if (action === 'back') {
+        return false;
+    }
     switch (action) {
         case 'save':
             await stashSave();
@@ -69,6 +84,7 @@ async function showStashMenu() {
             await stashClear();
             break;
     }
+    return true;
 }
 async function stashSave() {
     const { message } = await inquirer_1.default.prompt([
