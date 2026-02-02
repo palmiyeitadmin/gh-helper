@@ -1,25 +1,48 @@
 {
-    "name": "git-helper",
+    "name": "plmhelper",
     "version": "1.0.0",
-    "description": "Interactive Git CLI helper with AI-powered commit message suggestions",
+    "description": "Interactive Git CLI helper with AI-powered commit message suggestions - Türkçe destekli",
     "main": "dist/index.js",
     "bin": {
-        "git-helper": "./dist/index.js",
-        "gh": "./dist/index.js"
+        "plmhelper": "dist/index.js",
+        "plm": "dist/index.js"
     },
     "scripts": {
         "build": "tsc",
         "start": "node dist/index.js",
-        "dev": "ts-node src/index.ts"
+        "dev": "ts-node src/index.ts",
+        "prepublishOnly": "npm run build"
     },
     "keywords": [
         "git",
         "cli",
         "helper",
-        "commit"
+        "commit",
+        "branch",
+        "stash",
+        "merge",
+        "gitignore",
+        "turkish",
+        "palmiye"
     ],
     "author": "Palmiye",
     "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/palmiye/plmhelper.git"
+    },
+    "homepage": "https://github.com/palmiye/plmhelper#readme",
+    "bugs": {
+        "url": "https://github.com/palmiye/plmhelper/issues"
+    },
+    "engines": {
+        "node": ">=16.0.0"
+    },
+    "files": [
+        "dist/**/*",
+        "README.md",
+        "LICENSE"
+    ],
     "dependencies": {
         "chalk": "^4.1.2",
         "commander": "^11.1.0",

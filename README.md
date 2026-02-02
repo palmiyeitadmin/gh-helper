@@ -1,6 +1,9 @@
-# Git Helper CLI 🚀
+# plmhelper 🚀
 
 AI destekli commit mesaj önerileri ile interaktif Git CLI yardımcısı.
+
+[![npm version](https://badge.fury.io/js/plmhelper.svg)](https://www.npmjs.com/package/plmhelper)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## ✨ Özellikler
 
@@ -21,6 +24,14 @@ AI destekli commit mesaj önerileri ile interaktif Git CLI yardımcısı.
 
 ## 📦 Kurulum
 
+### npm ile (Önerilen)
+
+```bash
+npm install -g plmhelper
+```
+
+### Manuel Kurulum
+
 ```bash
 # Klasöre git
 cd C:\tools\git-helper
@@ -31,16 +42,8 @@ npm install
 # Derle
 npm run build
 
-# Global kurulum (opsiyonel)
+# Global kurulum
 npm link
-```
-
-### PowerShell Profil Kısayolu
-
-PowerShell profilinize ekleyin (`$PROFILE`):
-
-```powershell
-function gh { C:\tools\git-helper\gh.cmd }
 ```
 
 ## 🎮 Kullanım
@@ -49,7 +52,7 @@ function gh { C:\tools\git-helper\gh.cmd }
 
 ```bash
 # Herhangi bir git repository'de
-gh
+plm
 ```
 
 Bu merkezi dashboard'u açar ve tüm özelliklere tek ekrandan erişebilirsiniz.
@@ -57,26 +60,26 @@ Bu merkezi dashboard'u açar ve tüm özelliklere tek ekrandan erişebilirsiniz.
 ### Doğrudan Komutlar
 
 ```bash
-gh status      # Detaylı durum
-gh commit      # AI önerili commit
-gh push        # GitHub'a push
-gh history     # Commit geçmişi
-gh history -n 20  # Son 20 commit
+plm status      # Detaylı durum
+plm commit      # AI önerili commit
+plm push        # GitHub'a push
+plm history     # Commit geçmişi
+plm history -n 20  # Son 20 commit
 
 # Gelişmiş
-gh branch      # veya gh b - Branch yönetimi
-gh stash       # veya gh s - Stash yönetimi
-gh tag         # veya gh t - Tag yönetimi
-gh merge       # veya gh m - Merge/Rebase
-gh init        # veya gh i - Repo başlat/remote bağla
-gh gitignore   # veya gh g - .gitignore yönetimi
-gh clone       # veya gh c - Repo klonla
+plm branch      # veya plm b - Branch yönetimi
+plm stash       # veya plm s - Stash yönetimi
+plm tag         # veya plm t - Tag yönetimi
+plm merge       # veya plm m - Merge/Rebase
+plm init        # veya plm i - Repo başlat/remote bağla
+plm gitignore   # veya plm g - .gitignore yönetimi
+plm clone       # veya plm c - Repo klonla
 ```
 
 ## 🔀 Branch Yönetimi
 
 ```
-gh branch
+plm branch
 ```
 
 - 🔀 Branch değiştir
@@ -112,7 +115,7 @@ gh tag
 ## ⚔️ Merge/Rebase
 
 ```
-gh merge
+plm merge
 ```
 
 - 🔀 Branch merge et (--no-ff seçeneği)
@@ -124,7 +127,7 @@ gh merge
 ## 🔗 Remote Yönetimi
 
 ```
-gh init
+plm init
 ```
 
 - Git repo başlat
@@ -135,7 +138,7 @@ gh init
 ## 📝 .gitignore Yönetimi
 
 ```
-gh gitignore
+plm gitignore
 ```
 
 - 📝 Şablondan ekle (Node.js, TypeScript, Python, Java, IDE, OS)
