@@ -1,3 +1,4 @@
+import { SimpleGit } from 'simple-git';
 export interface GitStatus {
     branch: string;
     staged: string[];
@@ -42,6 +43,8 @@ declare class GitOperations {
     private git;
     private workingDir;
     constructor(workingDir?: string);
+    isGitRepository(): Promise<boolean>;
+    getGit(): SimpleGit;
     getStatus(): Promise<GitStatus>;
     getRecentCommits(count?: number): Promise<CommitInfo[]>;
     getStagedDiff(): Promise<string>;

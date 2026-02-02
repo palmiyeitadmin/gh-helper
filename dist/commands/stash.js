@@ -58,7 +58,8 @@ async function showStashMenuWithReturn() {
             type: 'list',
             name: 'action',
             message: 'Ne yapmak istersiniz?',
-            choices
+            choices,
+            loop: false
         }
     ]);
     if (action === 'back') {

@@ -57,6 +57,21 @@ class GitOperations {
         this.git = simpleGit(this.workingDir);
     }
 
+    // ==================== REPO CHECK ====================
+    async isGitRepository(): Promise<boolean> {
+        try {
+            await this.git.status();
+            return true;
+        } catch (error) {
+            return false;
+        }
+    }
+
+    // Raw git erişimi (analytics için)
+    getGit(): SimpleGit {
+        return this.git;
+    }
+
     // ==================== STATUS ====================
     async getStatus(): Promise<GitStatus> {
         const status: StatusResult = await this.git.status();

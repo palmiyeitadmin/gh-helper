@@ -16,6 +16,7 @@ import {
     promptConfirmPush
 } from '../ui/prompts';
 import { generateCommitSuggestion } from '../ai/suggest';
+import { getConfig, isFeatureEnabled, refreshConfig } from '../config/settings';
 
 // Sub-menu functions - imported inline to avoid circular dependencies
 import { manageBranchesMenu } from './branch';
@@ -24,6 +25,10 @@ import { manageTagsMenu } from './tag';
 import { manageMergeRebaseMenu } from './merge';
 import { initRepositoryMenu } from './init';
 import { manageGitignoreMenu } from './gitignore';
+import { manageSettingsMenu } from './settings';
+import { manageSecurityMenu } from './security';
+import { manageAnalyticsMenu } from './analytics';
+import { manageAdvancedMenu } from './advanced';
 
 export async function showDashboard(): Promise<void> {
     let running = true;
@@ -33,6 +38,45 @@ export async function showDashboard(): Promise<void> {
             console.clear();
             const projectName = gitOps.getProjectName();
             displayHeader(projectName);
+
+            // Check if current directory is a git repository
+            const isGitRepo = await gitOps.isGitRepository();
+
+            if (!isGitRepo) {
+                // Not a git repository - show init/clone menu
+                console.log(chalk.yellow('\n⚠️ Bu klasör bir Git repository değil.\n'));
+
+                const { action } = await inquirer.prompt([{
+                    type: 'list',
+                    name: 'action',
+                    message: 'Ne yapmak istersiniz?',
+                    choices: [
+                        { name: '🆕 Yeni Git repository başlat', value: 'init' },
+                        { name: '📥 Uzak repository klonla', value: 'clone' },
+                        { name: '📝 .gitignore oluştur', value: 'gitignore' },
+                        { name: '❌ Çıkış', value: 'exit' }
+                    ]
+                }]);
+
+                switch (action) {
+                    case 'init':
+                        await initRepositoryMenu();
+                        break;
+                    case 'clone':
+                        const { cloneRepository } = await import('./init');
+                        await cloneRepository();
+                        running = false;
+                        break;
+                    case 'gitignore':
+                        await manageGitignoreMenu();
+                        break;
+                    case 'exit':
+                        running = false;
+                        console.log('\n👋 Görüşmek üzere!\n');
+                        break;
+                }
+                continue;
+            }
 
             const spinner = ora('Git durumu yükleniyor...').start();
 
@@ -106,6 +150,32 @@ export async function showDashboard(): Promise<void> {
                     await manageGitignoreMenu();
                     break;
 
+                case 'settings':
+                    await manageSettingsMenu();
+                    refreshConfig(); // Ayarlar değiştiğinde yenile
+                    break;
+
+                case 'sensitive-scan':
+                case 'conventional':
+                case 'security':
+                    await manageSecurityMenu();
+                    break;
+
+                case 'commit-stats':
+                case 'contributors':
+                case 'branch-compare':
+                case 'analytics':
+                    await manageAnalyticsMenu();
+                    break;
+
+                case 'cherrypick':
+                case 'bisect':
+                case 'blame':
+                case 'reflog':
+                case 'advanced':
+                    await manageAdvancedMenu();
+                    break;
+
                 case 'exit':
                     running = false;
                     console.log('\n👋 Görüşmek üzere!\n');
@@ -119,66 +189,108 @@ export async function showDashboard(): Promise<void> {
 }
 
 async function promptMainDashboardMenu(status: any): Promise<{ action: string }> {
+    const config = getConfig();
     const choices = [];
 
-    // Git İşlemleri
-    choices.push(new inquirer.Separator('─── Git İşlemleri ───'));
+    // Profil bilgisi göster
+    const profileLabel = config.profile === 'standard' ? '👤' : config.profile === 'expert' ? '👨‍💻' : '⚙️';
+
+    // Çıkış ve Ayarlar EN ÜSTTE (kolay erişim için)
+    choices.push(
+        { name: '❌  Çıkış', value: 'exit' },
+        { name: `⚙️  Ayarlar ${profileLabel}`, value: 'settings' },
+        new inquirer.Separator('─── Git İşlemleri ───')
+    );
 
     // Stage
     if (status.modified.length > 0 || status.untracked.length > 0) {
-        choices.push({ name: `➕ Dosyaları stage'le (${status.modified.length + status.untracked.length} dosya)`, value: 'stage' });
+        choices.push({ name: `➕  Dosyaları stage'le (${status.modified.length + status.untracked.length} dosya)`, value: 'stage' });
     }
 
     // Commit
     if (status.staged.length > 0) {
-        choices.push({ name: `📝 Commit yap (${status.staged.length} staged dosya)`, value: 'commit' });
-        choices.push({ name: '📤 Commit\'le ve push\'la', value: 'commit-push' });
+        choices.push({ name: `📝  Commit yap (${status.staged.length} staged dosya)`, value: 'commit' });
+        choices.push({ name: '📤  Commit\'le ve push\'la', value: 'commit-push' });
     }
 
     // Push
     if (status.ahead > 0) {
-        choices.push({ name: `⬆️ Push yap (${status.ahead} commit önde)`, value: 'push' });
+        choices.push({ name: `⬆️  Push yap (${status.ahead} commit önde)`, value: 'push' });
     } else {
-        choices.push({ name: '⬆️ Push yap', value: 'push' });
+        choices.push({ name: '⬆️  Push yap', value: 'push' });
     }
 
     // Pull
     if (status.behind > 0) {
-        choices.push({ name: `⬇️ Pull yap (${status.behind} commit geride)`, value: 'pull' });
+        choices.push({ name: `⬇️  Pull yap (${status.behind} commit geride)`, value: 'pull' });
     } else {
-        choices.push({ name: '⬇️ Pull yap', value: 'pull' });
+        choices.push({ name: '⬇️  Pull yap', value: 'pull' });
     }
 
-    // Görüntüleme
+    // Görüntüleme (her zaman görünür)
     choices.push(
         new inquirer.Separator('─── Görüntüle ───'),
-        { name: '📊 Detaylı durumu görüntüle', value: 'status' },
-        { name: '🔍 Diff görüntüle', value: 'diff' },
-        { name: '📋 Geçmişi görüntüle', value: 'history' }
+        { name: '📊  Detaylı durumu görüntüle', value: 'status' },
+        { name: '🔍  Diff görüntüle', value: 'diff' },
+        { name: '📋  Geçmişi görüntüle', value: 'history' }
     );
 
-    // Gelişmiş özellikler
-    choices.push(
-        new inquirer.Separator('─── Gelişmiş Özellikler ───'),
-        { name: '🔀 Branch yönetimi', value: 'branch' },
-        { name: '📦 Stash yönetimi', value: 'stash' },
-        { name: '🏷️ Tag yönetimi', value: 'tag' },
-        { name: '⚔️ Merge/Rebase', value: 'merge' },
-        { name: '🔗 Remote yönetimi', value: 'remote' },
-        { name: '📝 .gitignore yönetimi', value: 'gitignore' }
-    );
+    // Yönetim (profil bazlı)
+    choices.push(new inquirer.Separator('─── Yönetim ───'));
 
-    choices.push(
-        new inquirer.Separator(),
-        { name: '❌ Çıkış', value: 'exit' }
-    );
+    if (isFeatureEnabled('branch', config)) {
+        choices.push({ name: '🔀  Branch yönetimi', value: 'branch' });
+    }
+    if (isFeatureEnabled('stash', config)) {
+        choices.push({ name: '📦  Stash yönetimi', value: 'stash' });
+    }
+    if (isFeatureEnabled('tag', config)) {
+        choices.push({ name: '🏷️  Tag yönetimi', value: 'tag' });
+    }
+    if (isFeatureEnabled('merge', config)) {
+        choices.push({ name: '⚔️  Merge/Rebase', value: 'merge' });
+    }
+    if (isFeatureEnabled('remote', config)) {
+        choices.push({ name: '🔗  Remote yönetimi', value: 'remote' });
+    }
+    if (isFeatureEnabled('gitignore', config)) {
+        choices.push({ name: '📝  .gitignore yönetimi', value: 'gitignore' });
+    }
+
+    // Expert/Custom profillerde ek özellikler
+    if (config.profile !== 'standard') {
+        // Gelişmiş Git (sadece expert/custom)
+        if (isFeatureEnabled('advanced', config)) {
+            choices.push(new inquirer.Separator('─── Gelişmiş ───'));
+            choices.push({ name: '🍒  Cherry-pick', value: 'cherrypick' });
+            choices.push({ name: '🔍  Bisect', value: 'bisect' });
+            choices.push({ name: '👤  Blame', value: 'blame' });
+            choices.push({ name: '📜  Reflog', value: 'reflog' });
+        }
+
+        // Analiz (sadece expert/custom)
+        if (isFeatureEnabled('analytics', config)) {
+            choices.push(new inquirer.Separator('─── Analiz ───'));
+            choices.push({ name: '📈  Commit istatistikleri', value: 'commit-stats' });
+            choices.push({ name: '👥  Contributor özeti', value: 'contributors' });
+            choices.push({ name: '⚖️  Branch karşılaştırma', value: 'branch-compare' });
+        }
+
+        // Güvenlik (sadece expert/custom)
+        if (isFeatureEnabled('security', config)) {
+            choices.push(new inquirer.Separator('─── Güvenlik ───'));
+            choices.push({ name: '🔍  Sensitive data tarama', value: 'sensitive-scan' });
+            choices.push({ name: '✅  Conventional commit', value: 'conventional' });
+        }
+    }
 
     const { action } = await inquirer.prompt([{
         type: 'list',
         name: 'action',
-        message: 'Ne yapmak istersiniz?',
+        message: 'Ne yapmak istersiniz? (Ctrl+C ile çıkış)',
         choices,
-        pageSize: 20
+        pageSize: 20,
+        loop: false
     }]);
 
     return { action };

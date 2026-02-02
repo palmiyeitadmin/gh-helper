@@ -44,6 +44,20 @@ class GitOperations {
         this.workingDir = workingDir || process.cwd();
         this.git = (0, simple_git_1.default)(this.workingDir);
     }
+    // ==================== REPO CHECK ====================
+    async isGitRepository() {
+        try {
+            await this.git.status();
+            return true;
+        }
+        catch (error) {
+            return false;
+        }
+    }
+    // Raw git erişimi (analytics için)
+    getGit() {
+        return this.git;
+    }
     // ==================== STATUS ====================
     async getStatus() {
         const status = await this.git.status();

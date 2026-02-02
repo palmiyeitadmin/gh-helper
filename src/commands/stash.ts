@@ -66,7 +66,8 @@ async function showStashMenuWithReturn(): Promise<boolean> {
             type: 'list',
             name: 'action',
             message: 'Ne yapmak istersiniz?',
-            choices
+            choices,
+            loop: false
         }
     ]);
 

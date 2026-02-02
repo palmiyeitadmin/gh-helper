@@ -46,13 +46,15 @@ async function showBranchMenuWithReturn(): Promise<boolean> {
             name: 'action',
             message: 'Ne yapmak istersiniz?',
             choices: [
-                { name: '🔀 Branch değiştir', value: 'switch' },
-                { name: '➕ Yeni branch oluştur', value: 'create' },
-                { name: '✏️ Branch yeniden adlandır', value: 'rename' },
-                { name: '🗑️ Branch sil', value: 'delete' },
-                { name: '📋 Tüm branch\'ları listele (remote dahil)', value: 'list-all' },
-                { name: '⬅️ Ana menüye dön', value: 'back' }
-            ]
+                { name: '⬅️  Ana menüye dön', value: 'back' },
+                new inquirer.Separator(),
+                { name: '🔀  Branch değiştir', value: 'switch' },
+                { name: '➕  Yeni branch oluştur', value: 'create' },
+                { name: '✏️  Branch yeniden adlandır', value: 'rename' },
+                { name: '🗑️  Branch sil', value: 'delete' },
+                { name: '📋  Tüm branch\'ları listele (remote dahil)', value: 'list-all' }
+            ],
+            loop: false
         }
     ]);
 
