@@ -1,10 +1,72 @@
 import { gitOps } from '../git/operations';
+import { getConfig } from '../config/settings';
+import { createAIProvider, AIProvider } from './ai-provider';
 
 interface CommitSuggestion {
     type: 'feat' | 'fix' | 'docs' | 'style' | 'refactor' | 'test' | 'chore' | 'perf' | 'build' | 'ci';
     scope?: string;
     message: string;
     fullMessage: string;
+    isAI: boolean;  // AI tarafından mı üretildi?
+}
+
+// AI ile commit önerisi üret
+export async function generateAICommitSuggestion(): Promise<{ suggestion: string | null; error?: string }> {
+    const config = getConfig();
+
+    if (!config.aiEnabled || config.aiProvider === 'none') {
+        return { suggestion: null };
+    }
+
+    try {
+        const provider = createAIProvider(config);
+        if (!provider) {
+            return { suggestion: null, error: 'AI provider oluşturulamadı' };
+        }
+
+        // Staged dosyaları ve diff al
+        const stagedFiles = await gitOps.getStagedFiles();
+        if (stagedFiles.length === 0) {
+            return { suggestion: null, error: 'Stage edilmiş dosya yok' };
+        }
+
+        const fullDiff = await gitOps.getDiff(true); // staged diff
+
+        // Diff'i dosyalara ayır ve önceliklendirme yap
+        const diffParts = fullDiff.split(/(?=diff --git)/);
+        const priorityFiles: string[] = [];
+
+        for (const part of diffParts) {
+            if (!part.trim()) continue;
+            // dist dosyalarını ve node_modules atla
+            if (part.includes('dist/') || part.includes('node_modules/')) {
+                continue;
+            }
+            // src dosyalarını öncelikle
+            if (part.includes('src/')) {
+                priorityFiles.unshift(part);
+            } else {
+                priorityFiles.push(part);
+            }
+        }
+
+        // Öncelikli dosyaları birleştir (max 6000 karakter)
+        const filteredDiff = priorityFiles.join('\n').slice(0, 6000);
+
+        // Kaynak dosya listesi (dist hariç)
+        const srcFiles = stagedFiles.filter(f => !f.includes('dist/'));
+
+        // DEBUG
+        console.log(`[DEBUG] Priority files: ${priorityFiles.length} (dist excluded)`);
+        console.log(`[DEBUG] Filtered diff: ${filteredDiff.length} chars`);
+
+        // AI'dan öneri al
+        const aiSuggestion = await provider.generateCommitMessage(filteredDiff, srcFiles);
+
+        return { suggestion: aiSuggestion };
+    } catch (error: any) {
+        return { suggestion: null, error: error.message };
+    }
 }
 
 const TYPE_DESCRIPTIONS: Record<string, string> = {
@@ -38,7 +100,8 @@ export async function generateCommitSuggestion(): Promise<CommitSuggestion> {
         type: type as CommitSuggestion['type'],
         scope,
         message,
-        fullMessage
+        fullMessage,
+        isAI: false
     };
 }
 

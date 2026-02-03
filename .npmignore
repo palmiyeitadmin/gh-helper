@@ -1,0 +1,26 @@
+# Source files (dist yeterli)
+src/
+tsconfig.json
+
+# Development files
+.git/
+.github/
+.vscode/
+*.log
+*.tmp
+
+# Config files (API KEY GÜVENLİĞİ!)
+.plmhelperrc
+.env
+.env.*
+
+# Test files
+*.test.ts
+*.spec.ts
+__tests__/
+coverage/
+
+# Other
+node_modules/
+.DS_Store
+Thumbs.db

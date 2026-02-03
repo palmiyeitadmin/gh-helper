@@ -92,6 +92,12 @@ class GitOperations {
         const status = await this.git.status();
         return status.staged;
     }
+    async getDiff(staged = false) {
+        if (staged) {
+            return await this.git.diff(['--cached']);
+        }
+        return await this.git.diff();
+    }
     async getModifiedFiles() {
         const status = await this.git.status();
         return [...status.modified, ...status.not_added];

@@ -1,6 +1,6 @@
 {
     "name": "plmhelper",
-    "version": "1.3.2",
+    "version": "1.5.0",
     "description": "Interactive Git CLI helper with AI-powered commit message suggestions - Türkçe destekli",
     "main": "dist/index.js",
     "bin": {

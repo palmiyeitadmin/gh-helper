@@ -50,6 +50,7 @@ declare class GitOperations {
     getStagedDiff(): Promise<string>;
     getFullDiff(): Promise<string>;
     getStagedFiles(): Promise<string[]>;
+    getDiff(staged?: boolean): Promise<string>;
     getModifiedFiles(): Promise<string[]>;
     stageFiles(files: string[]): Promise<void>;
     stageAll(): Promise<void>;

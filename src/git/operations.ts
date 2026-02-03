@@ -113,6 +113,13 @@ class GitOperations {
         return status.staged;
     }
 
+    async getDiff(staged: boolean = false): Promise<string> {
+        if (staged) {
+            return await this.git.diff(['--cached']);
+        }
+        return await this.git.diff();
+    }
+
     async getModifiedFiles(): Promise<string[]> {
         const status = await this.git.status();
         return [...status.modified, ...status.not_added];

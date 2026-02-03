@@ -8,6 +8,9 @@ export type ProfileType = 'standard' | 'expert' | 'custom';
 // Tema tipleri
 export type ThemeType = 'default' | 'dark' | 'light' | 'ocean';
 
+// AI Provider tipleri
+export type AIProviderType = 'none' | 'groq' | 'gemini' | 'deepseek' | 'openai' | 'anthropic' | 'minimax' | 'ollama';
+
 // Ana config interface
 export interface PlmConfig {
     profile: ProfileType;
@@ -17,6 +20,12 @@ export interface PlmConfig {
     aliases: Record<string, string>;
     favorites: string[];
     conventionalCommit: boolean;
+
+    // AI Ayarları
+    aiProvider: AIProviderType;
+    aiApiKey?: string;
+    aiModel?: string;
+    aiEnabled: boolean;
 }
 
 // Özellik grupları
@@ -80,7 +89,13 @@ const DEFAULT_CONFIG: PlmConfig = {
     language: 'tr',
     aliases: {},
     favorites: [],
-    conventionalCommit: false
+    conventionalCommit: false,
+
+    // AI varsayılanları
+    aiProvider: 'none',
+    aiApiKey: undefined,
+    aiModel: undefined,
+    aiEnabled: false
 };
 
 // Config dosyası yolları

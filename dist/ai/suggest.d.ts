@@ -3,7 +3,12 @@ interface CommitSuggestion {
     scope?: string;
     message: string;
     fullMessage: string;
+    isAI: boolean;
 }
+export declare function generateAICommitSuggestion(): Promise<{
+    suggestion: string | null;
+    error?: string;
+}>;
 export declare function generateCommitSuggestion(): Promise<CommitSuggestion>;
 export declare function getCommitTypes(): {
     value: string;

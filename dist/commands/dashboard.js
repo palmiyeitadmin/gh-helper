@@ -279,18 +279,53 @@ async function waitForEnter() {
         }]);
 }
 async function handleCommit(pushAfter) {
-    const spinner = (0, ora_1.default)('Değişiklikler analiz ediliyor...').start();
+    // Config'i yenile (cached olmaması için)
+    (0, settings_1.refreshConfig)();
+    const config = (0, settings_1.getConfig)();
     const stagedFiles = await operations_1.gitOps.getStagedFiles();
     if (stagedFiles.length === 0) {
-        spinner.stop();
         (0, display_1.displayError)('Staged dosya yok. Önce dosyaları stage\'leyin.');
         await waitForEnter();
         return;
     }
-    const suggestion = await (0, suggest_1.generateCommitSuggestion)();
-    spinner.stop();
-    (0, display_1.displayCommitSuggestion)(suggestion.fullMessage);
-    const commitMessage = await (0, prompts_1.promptCommitMessage)(suggestion.fullMessage);
+    // Generate commit suggestion (AI or local)
+    let suggestionMessage;
+    let isAISuggestion = false;
+    if (config.aiEnabled && config.aiProvider !== 'none') {
+        // AI önerisi dene
+        const aiSpinner = (0, ora_1.default)('🤖 AI commit önerisi oluşturuluyor...').start();
+        try {
+            const aiResult = await (0, suggest_1.generateAICommitSuggestion)();
+            if (aiResult.suggestion) {
+                suggestionMessage = aiResult.suggestion;
+                isAISuggestion = true;
+                aiSpinner.succeed('🤖 AI önerisi hazır');
+            }
+            else {
+                aiSpinner.warn(aiResult.error || 'AI önerisi alınamadı, lokal analiz kullanılıyor');
+                const localSuggestion = await (0, suggest_1.generateCommitSuggestion)();
+                suggestionMessage = localSuggestion.fullMessage;
+            }
+        }
+        catch (error) {
+            aiSpinner.warn(`AI hatası: ${error.message}, lokal analiz kullanılıyor`);
+            const localSuggestion = await (0, suggest_1.generateCommitSuggestion)();
+            suggestionMessage = localSuggestion.fullMessage;
+        }
+    }
+    else {
+        // Lokal analiz
+        const spinner = (0, ora_1.default)('Değişiklikler analiz ediliyor...').start();
+        const suggestion = await (0, suggest_1.generateCommitSuggestion)();
+        spinner.stop();
+        suggestionMessage = suggestion.fullMessage;
+    }
+    // Öneri kutusunu göster
+    if (isAISuggestion) {
+        console.log(chalk_1.default.cyan('\n  🤖 AI Önerilen Commit Mesajı:\n'));
+    }
+    (0, display_1.displayCommitSuggestion)(suggestionMessage);
+    const commitMessage = await (0, prompts_1.promptCommitMessage)(suggestionMessage);
     const commitSpinner = (0, ora_1.default)('Commit yapılıyor...').start();
     try {
         await operations_1.gitOps.commit(commitMessage);

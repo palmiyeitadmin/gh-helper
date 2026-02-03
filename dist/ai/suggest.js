@@ -1,9 +1,62 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.generateAICommitSuggestion = generateAICommitSuggestion;
 exports.generateCommitSuggestion = generateCommitSuggestion;
 exports.getCommitTypes = getCommitTypes;
 exports.formatConventionalCommit = formatConventionalCommit;
 const operations_1 = require("../git/operations");
+const settings_1 = require("../config/settings");
+const ai_provider_1 = require("./ai-provider");
+// AI ile commit önerisi üret
+async function generateAICommitSuggestion() {
+    const config = (0, settings_1.getConfig)();
+    if (!config.aiEnabled || config.aiProvider === 'none') {
+        return { suggestion: null };
+    }
+    try {
+        const provider = (0, ai_provider_1.createAIProvider)(config);
+        if (!provider) {
+            return { suggestion: null, error: 'AI provider oluşturulamadı' };
+        }
+        // Staged dosyaları ve diff al
+        const stagedFiles = await operations_1.gitOps.getStagedFiles();
+        if (stagedFiles.length === 0) {
+            return { suggestion: null, error: 'Stage edilmiş dosya yok' };
+        }
+        const fullDiff = await operations_1.gitOps.getDiff(true); // staged diff
+        // Diff'i dosyalara ayır ve önceliklendirme yap
+        const diffParts = fullDiff.split(/(?=diff --git)/);
+        const priorityFiles = [];
+        for (const part of diffParts) {
+            if (!part.trim())
+                continue;
+            // dist dosyalarını ve node_modules atla
+            if (part.includes('dist/') || part.includes('node_modules/')) {
+                continue;
+            }
+            // src dosyalarını öncelikle
+            if (part.includes('src/')) {
+                priorityFiles.unshift(part);
+            }
+            else {
+                priorityFiles.push(part);
+            }
+        }
+        // Öncelikli dosyaları birleştir (max 6000 karakter)
+        const filteredDiff = priorityFiles.join('\n').slice(0, 6000);
+        // Kaynak dosya listesi (dist hariç)
+        const srcFiles = stagedFiles.filter(f => !f.includes('dist/'));
+        // DEBUG
+        console.log(`[DEBUG] Priority files: ${priorityFiles.length} (dist excluded)`);
+        console.log(`[DEBUG] Filtered diff: ${filteredDiff.length} chars`);
+        // AI'dan öneri al
+        const aiSuggestion = await provider.generateCommitMessage(filteredDiff, srcFiles);
+        return { suggestion: aiSuggestion };
+    }
+    catch (error) {
+        return { suggestion: null, error: error.message };
+    }
+}
 const TYPE_DESCRIPTIONS = {
     feat: 'Yeni özellik',
     fix: 'Hata düzeltme',
@@ -31,7 +84,8 @@ async function generateCommitSuggestion() {
         type: type,
         scope,
         message,
-        fullMessage
+        fullMessage,
+        isAI: false
     };
 }
 function analyzeFilePatterns(files) {
