@@ -3,7 +3,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.promptMainMenu = promptMainMenu;
 exports.promptStageFiles = promptStageFiles;
 exports.promptCommitMessage = promptCommitMessage;
 exports.promptConfirmPush = promptConfirmPush;
@@ -12,55 +11,6 @@ exports.promptSelectCommitType = promptSelectCommitType;
 exports.promptCommitScope = promptCommitScope;
 exports.promptCommitDescription = promptCommitDescription;
 const inquirer_1 = __importDefault(require("inquirer"));
-async function promptMainMenu(status) {
-    const choices = [];
-    // Temel Git işlemleri - her zaman göster
-    choices.push(new inquirer_1.default.Separator('─── Git İşlemleri ───'));
-    // Stage
-    if (status.modified.length > 0 || status.untracked.length > 0) {
-        choices.push({ name: `➕ Dosyaları stage'le (${status.modified.length + status.untracked.length} dosya)`, value: 'stage' });
-    }
-    else {
-        choices.push({ name: '➕ Dosyaları stage\'le', value: 'stage', disabled: 'Değişiklik yok' });
-    }
-    // Commit
-    if (status.staged.length > 0) {
-        choices.push({ name: `📝 Commit yap (${status.staged.length} staged dosya)`, value: 'commit' });
-        choices.push({ name: '📤 Commit\'le ve push\'la', value: 'commit-push' });
-    }
-    else {
-        choices.push({ name: '📝 Commit yap', value: 'commit', disabled: 'Staged dosya yok' });
-    }
-    // Push
-    if (status.ahead > 0) {
-        choices.push({ name: `⬆️ Push yap (${status.ahead} commit önde)`, value: 'push' });
-    }
-    else {
-        choices.push({ name: '⬆️ Push yap', value: 'push' });
-    }
-    // Pull  
-    if (status.behind > 0) {
-        choices.push({ name: `⬇️ Pull yap (${status.behind} commit geride)`, value: 'pull' });
-    }
-    else {
-        choices.push({ name: '⬇️ Pull yap', value: 'pull' });
-    }
-    // Görüntüleme
-    choices.push(new inquirer_1.default.Separator('─── Görüntüle ───'), { name: '📊 Detaylı durumu görüntüle', value: 'status' }, { name: '🔍 Diff görüntüle', value: 'diff' }, { name: '📋 Geçmişi görüntüle', value: 'history' });
-    // Gelişmiş özellikler
-    choices.push(new inquirer_1.default.Separator('─── Gelişmiş Özellikler ───'), { name: '🔀 Branch yönetimi', value: 'branch' }, { name: '📦 Stash yönetimi', value: 'stash' }, { name: '🏷️ Tag yönetimi', value: 'tag' }, { name: '⚔️ Merge/Rebase', value: 'merge' }, { name: '🔗 Remote yönetimi', value: 'remote' }, { name: '📝 .gitignore yönetimi', value: 'gitignore' });
-    choices.push(new inquirer_1.default.Separator(), { name: '❌ Çıkış', value: 'exit' });
-    const { action } = await inquirer_1.default.prompt([
-        {
-            type: 'list',
-            name: 'action',
-            message: 'Ne yapmak istersiniz?',
-            choices,
-            pageSize: 15
-        }
-    ]);
-    return { action };
-}
 async function promptStageFiles(files) {
     if (files.length === 0) {
         return [];

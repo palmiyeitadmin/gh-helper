@@ -207,12 +207,14 @@ async function scanDirectory(dir: string): Promise<ScanResult[]> {
         // Skip ignored patterns
         if (shouldIgnore(relativePath)) continue;
 
-        const stat = fs.statSync(filePath);
+        // lstatSync ile symlink kontrolü (symlink döngülerini önle)
+        const lstat = fs.lstatSync(filePath);
+        if (lstat.isSymbolicLink()) continue;
 
-        if (stat.isDirectory()) {
+        if (lstat.isDirectory()) {
             const subResults = await scanDirectory(filePath);
             results.push(...subResults);
-        } else if (stat.isFile()) {
+        } else if (lstat.isFile()) {
             const fileResults = await scanFile(filePath);
             results.push(...fileResults);
         }

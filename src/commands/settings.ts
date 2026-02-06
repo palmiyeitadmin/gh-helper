@@ -17,6 +17,7 @@ import {
     ALL_FEATURES
 } from '../config/settings';
 import { AI_PROVIDERS, createAIProvider, maskApiKey } from '../ai/ai-provider';
+import { setTheme } from '../config/themes';
 
 // Dashboard'dan çağrılan menü
 export async function manageSettingsMenu(): Promise<void> {
@@ -191,6 +192,7 @@ async function changeTheme(): Promise<void> {
 
     saveConfig({ theme: theme as ThemeType });
     refreshConfig();
+    setTheme(theme as ThemeType);
     displaySuccess(`Tema değiştirildi: ${theme}`);
 }
 
@@ -340,57 +342,60 @@ async function resetSettings(): Promise<void> {
 
 // AI Ayarları Yönetimi
 async function manageAISettings(): Promise<void> {
-    const config = getConfig();
+    let running = true;
+    while (running) {
+        const config = getConfig();
 
-    console.log(chalk.bold('\n🤖 AI Ayarları'));
-    console.log(chalk.gray('─'.repeat(40)));
-    console.log(`  Durum: ${config.aiEnabled ? chalk.green('Aktif') : chalk.gray('Pasif')}`);
-    console.log(`  Provider: ${config.aiProvider !== 'none' ? AI_PROVIDERS[config.aiProvider].name : chalk.gray('Seçilmedi')}`);
-    if (config.aiProvider !== 'none' && config.aiProvider !== 'ollama') {
-        console.log(`  API Key: ${maskApiKey(config.aiApiKey)}`);
+        console.log(chalk.bold('\n🤖 AI Ayarları'));
+        console.log(chalk.gray('─'.repeat(40)));
+        console.log(`  Durum: ${config.aiEnabled ? chalk.green('Aktif') : chalk.gray('Pasif')}`);
+        console.log(`  Provider: ${config.aiProvider !== 'none' ? AI_PROVIDERS[config.aiProvider].name : chalk.gray('Seçilmedi')}`);
+        if (config.aiProvider !== 'none' && config.aiProvider !== 'ollama') {
+            console.log(`  API Key: ${maskApiKey(config.aiApiKey)}`);
+        }
+        if (config.aiModel) {
+            console.log(`  Model: ${config.aiModel}`);
+        }
+
+        const { action } = await inquirer.prompt([{
+            type: 'list',
+            name: 'action',
+            message: 'Ne yapmak istersiniz?',
+            choices: [
+                { name: '⬅️  Geri', value: 'back' },
+                new inquirer.Separator(),
+                { name: `${config.aiEnabled ? '🔴' : '🟢'}  AI ${config.aiEnabled ? 'Kapat' : 'Aç'}`, value: 'toggle' },
+                { name: '🔧  Provider seç', value: 'provider' },
+                { name: '🔑  API Key gir', value: 'apikey' },
+                { name: '📦  Model seç', value: 'model' },
+                { name: '🧪  Bağlantı test et', value: 'test' }
+            ],
+            loop: false
+        }]);
+
+        if (action === 'back') {
+            running = false;
+            continue;
+        }
+
+        switch (action) {
+            case 'toggle':
+                await toggleAI();
+                break;
+            case 'provider':
+                await selectProvider();
+                break;
+            case 'apikey':
+                await setApiKey();
+                break;
+            case 'model':
+                await selectModel();
+                break;
+            case 'test':
+                await testAIConnection();
+                break;
+        }
     }
-    if (config.aiModel) {
-        console.log(`  Model: ${config.aiModel}`);
-    }
-
-    const { action } = await inquirer.prompt([{
-        type: 'list',
-        name: 'action',
-        message: 'Ne yapmak istersiniz?',
-        choices: [
-            { name: '⬅️  Geri', value: 'back' },
-            new inquirer.Separator(),
-            { name: `${config.aiEnabled ? '🔴' : '🟢'}  AI ${config.aiEnabled ? 'Kapat' : 'Aç'}`, value: 'toggle' },
-            { name: '🔧  Provider seç', value: 'provider' },
-            { name: '🔑  API Key gir', value: 'apikey' },
-            { name: '📦  Model seç', value: 'model' },
-            { name: '🧪  Bağlantı test et', value: 'test' }
-        ],
-        loop: false
-    }]);
-
-    if (action === 'back') return;
-
-    switch (action) {
-        case 'toggle':
-            await toggleAI();
-            break;
-        case 'provider':
-            await selectProvider();
-            break;
-        case 'apikey':
-            await setApiKey();
-            break;
-        case 'model':
-            await selectModel();
-            break;
-        case 'test':
-            await testAIConnection();
-            break;
-    }
-
-    // Menüye geri dön
-    await manageAISettings();
 }
 
 async function toggleAI(): Promise<void> {

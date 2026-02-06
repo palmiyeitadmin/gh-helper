@@ -199,7 +199,7 @@ class GeminiProvider implements AIProvider {
                     }]
                 }],
                 generationConfig: {
-                    maxOutputTokens: 100,
+                    maxOutputTokens: 500,
                     temperature: 0.3
                 }
             })
@@ -230,8 +230,6 @@ class GeminiProvider implements AIProvider {
         try {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${this.apiKey}`;
 
-            console.log(`[DEBUG] Testing Gemini with URL: ${url.replace(this.apiKey, 'API_KEY_HIDDEN')}`);
-
             const response = await fetch(url, {
                 method: 'POST',
                 headers: {
@@ -250,20 +248,16 @@ class GeminiProvider implements AIProvider {
             });
 
             if (!response.ok) {
-                const errorText = await response.text();
-                console.log(`[DEBUG] Gemini test failed: ${response.status} - ${errorText}`);
                 return false;
             }
 
             const data = await response.json() as any;
             if (data.error) {
-                console.log(`[DEBUG] Gemini error in response: ${JSON.stringify(data.error)}`);
                 return false;
             }
 
             return true;
-        } catch (err: any) {
-            console.log(`[DEBUG] Gemini test exception: ${err.message}`);
+        } catch {
             return false;
         }
     }
@@ -293,7 +287,7 @@ class DeepSeekProvider implements AIProvider {
                     { role: 'system', content: 'Sen bir git commit mesajı uzmanısın. Conventional commit formatında Türkçe mesajlar yaz.' },
                     { role: 'user', content: getCommitPrompt(diff, files) }
                 ],
-                max_tokens: 100,
+                max_tokens: 500,
                 temperature: 0.3
             })
         });
@@ -352,7 +346,7 @@ class OpenAIProvider implements AIProvider {
                     { role: 'system', content: 'Sen bir git commit mesajı uzmanısın. Conventional commit formatında Türkçe mesajlar yaz.' },
                     { role: 'user', content: getCommitPrompt(diff, files) }
                 ],
-                max_tokens: 100,
+                max_tokens: 500,
                 temperature: 0.3
             })
         });
@@ -408,7 +402,7 @@ class AnthropicProvider implements AIProvider {
             },
             body: JSON.stringify({
                 model: this.model,
-                max_tokens: 100,
+                max_tokens: 500,
                 messages: [
                     { role: 'user', content: getCommitPrompt(diff, files) }
                 ]
@@ -470,7 +464,7 @@ class MiniMaxProvider implements AIProvider {
                     { role: 'system', content: 'Sen bir git commit mesajı uzmanısın. Conventional commit formatında Türkçe mesajlar yaz.' },
                     { role: 'user', content: getCommitPrompt(diff, files) }
                 ],
-                max_tokens: 100,
+                max_tokens: 500,
                 temperature: 0.3
             })
         });
@@ -486,9 +480,6 @@ class MiniMaxProvider implements AIProvider {
         if (data.base_resp && data.base_resp.status_code !== 0) {
             throw new Error(`MiniMax API hatası: ${data.base_resp.status_msg || 'Bilinmeyen hata'} (kod: ${data.base_resp.status_code})`);
         }
-
-        // Debug: Response yapısını göster
-        console.log('[DEBUG] MiniMax Response:', JSON.stringify(data, null, 2).slice(0, 500));
 
         // MiniMax farklı response formatları deneyebilir
         // Format 1: OpenAI uyumlu { choices: [{ message: { content } }] }

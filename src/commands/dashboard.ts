@@ -17,6 +17,7 @@ import {
 } from '../ui/prompts';
 import { generateCommitSuggestion, generateAICommitSuggestion } from '../ai/suggest';
 import { getConfig, isFeatureEnabled, refreshConfig } from '../config/settings';
+import { setTheme } from '../config/themes';
 
 // Sub-menu functions - imported inline to avoid circular dependencies
 import { manageBranchesMenu } from './branch';
@@ -31,6 +32,10 @@ import { manageAnalyticsMenu } from './analytics';
 import { manageAdvancedMenu } from './advanced';
 
 export async function showDashboard(): Promise<void> {
+    // Başlangıçta kaydedilmiş temayı uygula
+    const initialConfig = getConfig();
+    setTheme(initialConfig.theme);
+
     let running = true;
 
     while (running) {

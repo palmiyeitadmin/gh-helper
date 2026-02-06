@@ -313,7 +313,7 @@ async function revertCommit() {
             message: 'Hangi commit\'i geri almak istiyorsunuz?',
             choices: commits.map(c => ({
                 name: `${c.hash} - ${c.message} (${c.date})`,
-                value: c.hash
+                value: c.fullHash
             }))
         }
     ]);

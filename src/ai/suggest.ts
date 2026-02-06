@@ -56,10 +56,6 @@ export async function generateAICommitSuggestion(): Promise<{ suggestion: string
         // Kaynak dosya listesi (dist hariç)
         const srcFiles = stagedFiles.filter(f => !f.includes('dist/'));
 
-        // DEBUG
-        console.log(`[DEBUG] Priority files: ${priorityFiles.length} (dist excluded)`);
-        console.log(`[DEBUG] Filtered diff: ${filteredDiff.length} chars`);
-
         // AI'dan öneri al
         const aiSuggestion = await provider.generateCommitMessage(filteredDiff, srcFiles);
 

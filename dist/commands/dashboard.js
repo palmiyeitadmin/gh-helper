@@ -45,6 +45,7 @@ const display_1 = require("../ui/display");
 const prompts_1 = require("../ui/prompts");
 const suggest_1 = require("../ai/suggest");
 const settings_1 = require("../config/settings");
+const themes_1 = require("../config/themes");
 // Sub-menu functions - imported inline to avoid circular dependencies
 const branch_1 = require("./branch");
 const stash_1 = require("./stash");
@@ -57,6 +58,9 @@ const security_1 = require("./security");
 const analytics_1 = require("./analytics");
 const advanced_1 = require("./advanced");
 async function showDashboard() {
+    // Başlangıçta kaydedilmiş temayı uygula
+    const initialConfig = (0, settings_1.getConfig)();
+    (0, themes_1.setTheme)(initialConfig.theme);
     let running = true;
     while (running) {
         try {

@@ -75,6 +75,7 @@ class GitOperations {
         const log = await this.git.log({ maxCount: count });
         return log.all.map(commit => ({
             hash: commit.hash.substring(0, 7),
+            fullHash: commit.hash,
             date: new Date(commit.date).toLocaleDateString('tr-TR'),
             message: commit.message,
             author: commit.author_name
@@ -133,17 +134,16 @@ class GitOperations {
         }
     }
     async getDiffSummary() {
-        const status = await this.git.status();
-        const diffs = [];
-        for (const file of status.staged) {
-            diffs.push({
-                file,
-                insertions: 0,
-                deletions: 0,
-                changes: 1
-            });
-        }
-        return diffs;
+        const summary = await this.git.diffSummary(['--cached']);
+        return summary.files.map(f => {
+            const isBinary = f.binary === true;
+            return {
+                file: f.file,
+                insertions: isBinary ? 0 : f.insertions ?? 0,
+                deletions: isBinary ? 0 : f.deletions ?? 0,
+                changes: isBinary ? 1 : f.changes ?? 0
+            };
+        });
     }
     getWorkingDir() {
         return this.workingDir;
@@ -232,11 +232,12 @@ class GitOperations {
         await this.git.stash(['clear']);
     }
     async getStashList() {
-        const result = await this.git.stash(['list', '--format=%gd|%s|%ar']);
+        const SEP = '\x00';
+        const result = await this.git.stash(['list', `--format=%gd${SEP}%s${SEP}%ar`]);
         if (!result.trim())
             return [];
         return result.trim().split('\n').map((line, index) => {
-            const parts = line.split('|');
+            const parts = line.split(SEP);
             return {
                 index,
                 message: parts[1] || 'Stash',
@@ -297,9 +298,6 @@ class GitOperations {
     async rebase(branchName) {
         await this.git.rebase([branchName]);
     }
-    async rebaseInteractive(commitCount) {
-        await this.git.rebase(['-i', `HEAD~${commitCount}`]);
-    }
     async rebaseAbort() {
         await this.git.rebase(['--abort']);
     }
@@ -313,10 +311,24 @@ class GitOperations {
     }
     async getConflictedFiles() {
         const status = await this.git.status();
-        return status.conflicted.map(file => ({
-            file,
-            status: 'both_modified'
-        }));
+        return status.conflicted.map(file => {
+            const fileStatus = status.files.find(f => f.path === file);
+            let conflictType = 'both_modified';
+            if (fileStatus) {
+                const idx = fileStatus.index;
+                const work = fileStatus.working_dir;
+                if (idx === 'A' && work === 'A') {
+                    conflictType = 'both_added';
+                }
+                else if (idx === 'D') {
+                    conflictType = 'deleted_by_us';
+                }
+                else if (work === 'D') {
+                    conflictType = 'deleted_by_them';
+                }
+            }
+            return { file, status: conflictType };
+        });
     }
     async markAsResolved(files) {
         await this.git.add(files);

@@ -166,17 +166,39 @@ export function getFeaturesByCategory(category: string): { key: string; name: st
         .map(([key, value]) => ({ key, name: value.name }));
 }
 
-// Config singleton
+// Config singleton with mtime-based invalidation
 let cachedConfig: PlmConfig | null = null;
+let cachedConfigMtime: number = 0;
 
 export function getConfig(): PlmConfig {
-    if (!cachedConfig) {
-        cachedConfig = loadConfig();
+    const configPath = getConfigPath();
+    try {
+        if (fs.existsSync(configPath)) {
+            const mtime = fs.statSync(configPath).mtimeMs;
+            if (!cachedConfig || mtime !== cachedConfigMtime) {
+                cachedConfig = loadConfig();
+                cachedConfigMtime = mtime;
+            }
+        } else if (!cachedConfig) {
+            cachedConfig = loadConfig();
+        }
+    } catch {
+        if (!cachedConfig) {
+            cachedConfig = loadConfig();
+        }
     }
     return cachedConfig;
 }
 
 export function refreshConfig(): PlmConfig {
     cachedConfig = loadConfig();
+    const configPath = getConfigPath();
+    try {
+        if (fs.existsSync(configPath)) {
+            cachedConfigMtime = fs.statSync(configPath).mtimeMs;
+        }
+    } catch {
+        // ignore
+    }
     return cachedConfig;
 }

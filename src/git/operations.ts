@@ -13,6 +13,7 @@ export interface GitStatus {
 
 export interface CommitInfo {
     hash: string;
+    fullHash: string;
     date: string;
     message: string;
     author: string;
@@ -92,6 +93,7 @@ class GitOperations {
 
         return log.all.map(commit => ({
             hash: commit.hash.substring(0, 7),
+            fullHash: commit.hash,
             date: new Date(commit.date).toLocaleDateString('tr-TR'),
             message: commit.message,
             author: commit.author_name
@@ -161,19 +163,16 @@ class GitOperations {
     }
 
     async getDiffSummary(): Promise<FileDiff[]> {
-        const status = await this.git.status();
-        const diffs: FileDiff[] = [];
-
-        for (const file of status.staged) {
-            diffs.push({
-                file,
-                insertions: 0,
-                deletions: 0,
-                changes: 1
-            });
-        }
-
-        return diffs;
+        const summary = await this.git.diffSummary(['--cached']);
+        return summary.files.map(f => {
+            const isBinary = (f as any).binary === true;
+            return {
+                file: f.file,
+                insertions: isBinary ? 0 : (f as any).insertions ?? 0,
+                deletions: isBinary ? 0 : (f as any).deletions ?? 0,
+                changes: isBinary ? 1 : (f as any).changes ?? 0
+            };
+        });
     }
 
     getWorkingDir(): string {
@@ -275,11 +274,12 @@ class GitOperations {
     }
 
     async getStashList(): Promise<StashInfo[]> {
-        const result = await this.git.stash(['list', '--format=%gd|%s|%ar']);
+        const SEP = '\x00';
+        const result = await this.git.stash(['list', `--format=%gd${SEP}%s${SEP}%ar`]);
         if (!result.trim()) return [];
 
         return result.trim().split('\n').map((line, index) => {
-            const parts = line.split('|');
+            const parts = line.split(SEP);
             return {
                 index,
                 message: parts[1] || 'Stash',
@@ -351,10 +351,6 @@ class GitOperations {
         await this.git.rebase([branchName]);
     }
 
-    async rebaseInteractive(commitCount: number): Promise<void> {
-        await this.git.rebase(['-i', `HEAD~${commitCount}`]);
-    }
-
     async rebaseAbort(): Promise<void> {
         await this.git.rebase(['--abort']);
     }
@@ -372,10 +368,24 @@ class GitOperations {
     async getConflictedFiles(): Promise<ConflictFile[]> {
         const status = await this.git.status();
 
-        return status.conflicted.map(file => ({
-            file,
-            status: 'both_modified' as const
-        }));
+        return status.conflicted.map(file => {
+            const fileStatus = status.files.find(f => f.path === file);
+            let conflictType: ConflictFile['status'] = 'both_modified';
+
+            if (fileStatus) {
+                const idx = fileStatus.index;
+                const work = fileStatus.working_dir;
+                if (idx === 'A' && work === 'A') {
+                    conflictType = 'both_added';
+                } else if (idx === 'D') {
+                    conflictType = 'deleted_by_us';
+                } else if (work === 'D') {
+                    conflictType = 'deleted_by_them';
+                }
+            }
+
+            return { file, status: conflictType };
+        });
     }
 
     async markAsResolved(files: string[]): Promise<void> {

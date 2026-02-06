@@ -46,9 +46,6 @@ async function generateAICommitSuggestion() {
         const filteredDiff = priorityFiles.join('\n').slice(0, 6000);
         // Kaynak dosya listesi (dist hariç)
         const srcFiles = stagedFiles.filter(f => !f.includes('dist/'));
-        // DEBUG
-        console.log(`[DEBUG] Priority files: ${priorityFiles.length} (dist excluded)`);
-        console.log(`[DEBUG] Filtered diff: ${filteredDiff.length} chars`);
         // AI'dan öneri al
         const aiSuggestion = await provider.generateCommitMessage(filteredDiff, srcFiles);
         return { suggestion: aiSuggestion };

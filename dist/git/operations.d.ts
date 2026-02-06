@@ -10,6 +10,7 @@ export interface GitStatus {
 }
 export interface CommitInfo {
     hash: string;
+    fullHash: string;
     date: string;
     message: string;
     author: string;
@@ -85,7 +86,6 @@ declare class GitOperations {
     merge(branchName: string, noFastForward?: boolean): Promise<void>;
     mergeAbort(): Promise<void>;
     rebase(branchName: string): Promise<void>;
-    rebaseInteractive(commitCount: number): Promise<void>;
     rebaseAbort(): Promise<void>;
     rebaseContinue(): Promise<void>;
     hasConflicts(): Promise<boolean>;
